@@ -22,9 +22,9 @@ class OnCoreClient {
      * Constructor.
      */
     function __construct($wsdl, $login, $password) {
-        $this->initMappers();
-        $this->setClient($wsdl, $login, $password);
         $this->includeHandlers();
+        $this->setClient($wsdl, $login, $password);
+        $this->setHandlers();
     }
 
     /**
