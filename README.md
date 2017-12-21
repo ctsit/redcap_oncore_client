@@ -47,7 +47,7 @@ This module is still on construction so the supported operations so far are:
 - `registerExistingSubjectToProtocol`
 
 ## Logs page
-You may track your API calls by accessing the logs page. Go to your project page and click on **OnCore Logs** at the right menu.
+You may track your API calls by accessing the logs page. Go to your project page and click on **OnCore Logs** at the left menu.
 
 ![Logs page list](img/logs_page.png)
 ![Request](img/request_details.png)
