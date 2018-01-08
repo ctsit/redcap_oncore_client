@@ -22,7 +22,7 @@ Access **Manage External Modules** section of your project, click on OnCore Clie
 
 ## How to make API calls
 
-Here is an example of API request to get protocol information (`getProtocol`).
+Here is an example of an API request to get protocol information (`getProtocol`).
 
 ```php
 <?php

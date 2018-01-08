@@ -1,7 +1,7 @@
 {
     "name": "OnCore Client",
     "namespace": "OnCoreClient\\ExternalModule",
-    "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documetation here</a></strong>.",
+    "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
     "permissions": [
         "redcap_module_system_enable",
         "redcap_module_system_disable",
@@ -11,12 +11,12 @@
         {
             "name": "Philip Chase",
             "email": "pbc@ufl.edu",
-            "institution": "CTS-IT - University of Florida"
+            "institution": "University of Florida - CTSI"
         },
         {
             "name": "Tiago Bember",
             "email": "tbembersimeao@ufl.edu",
-            "institution": "CTS-IT - University of Florida"
+            "institution": "University of Florida - CTSI"
         }
     ],
     "project-settings": [
