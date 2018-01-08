@@ -1,0 +1,67 @@
+{
+    "name": "OnCore Client",
+    "namespace": "OnCoreClient\\ExternalModule",
+    "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documetation here</a></strong>.",
+    "permissions": [
+        "redcap_module_system_enable",
+        "redcap_module_system_disable",
+        "redcap_every_page_top"
+    ],
+    "authors": [
+        {
+            "name": "Philip Chase",
+            "email": "pbc@ufl.edu",
+            "institution": "CTS-IT - University of Florida"
+        },
+        {
+            "name": "Tiago Bember",
+            "email": "tbembersimeao@ufl.edu",
+            "institution": "CTS-IT - University of Florida"
+        }
+    ],
+    "project-settings": [
+        {
+            "key": "wsdl",
+            "name": "WSDL",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "login",
+            "name": "Login",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "password",
+            "name": "Password",
+            "required": true,
+            "type": "custom",
+            "source": "js/password.js",
+            "functionName": "OnCoreClient.passwordFieldHandler"
+        },
+        {
+            "key": "log_lifetime",
+            "name": "Clear logs after (days)",
+            "type": "text"
+        }
+    ],
+    "links": {
+        "project": [
+            {
+                "name": "OnCore Logs",
+                "icon": "report",
+                "url": "plugins/logs.php"
+           }
+        ]
+    },
+    "crons": [
+        {
+            "cron_name": "oncore_client_logs_clean_up",
+            "cron_description": "Daily job that cleans up old logs.",
+            "method": "logsCleanUp",
+            "cron_frequency": "86400",
+            "cron_max_run_time": "60"
+        }
+    ]
+}
