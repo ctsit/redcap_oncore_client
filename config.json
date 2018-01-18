@@ -49,7 +49,7 @@
     "links": {
         "project": [
             {
-                "name": "OnCore Logs",
+                "name": "OnCore API Logs",
                 "icon": "report",
                 "url": "plugins/logs.php"
            }
