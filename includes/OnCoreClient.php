@@ -97,6 +97,7 @@ class OnCoreClient {
             return false;
         }
 
+        $data = json_decode(json_encode($data));
         $data = new $class($data);
 
         try {
