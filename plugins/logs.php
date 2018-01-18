@@ -192,7 +192,7 @@ if (db_num_rows($q)) {
 ?>
 
 <div class="projhdr">
-    <img src="<?php echo APP_PATH_IMAGES; ?>report.png"> OnCore Logs
+    <img src="<?php echo APP_PATH_IMAGES; ?>report.png"> OnCore API Logs
 </div>
 
 <?php if (empty($rows)): ?>
