@@ -33,7 +33,7 @@ $client = $module->getSoapClient();
 $result = $client->request('getProtocol', array('protocolNo' => 'OCR20002'));
 ```
 
-For more complex requests (like `createProtocol` or `registerNewSubjectToProtocol`), check the `requests_examples.txt` file, which contains input examples of valid requests. For additional sample code see the testing code in (PBC's REDCap Module)[https://github.com/pbchase/my_redcap_module/tree/redcap_oncore_client_test].
+For more complex requests (like `createProtocol` or `registerNewSubjectToProtocol`), check the `requests_examples.txt` file, which contains input examples of valid requests. For additional sample code see the testing code in [PBC's REDCap Module](https://github.com/pbchase/my_redcap_module/tree/redcap_oncore_client_test).
 
 This module does not contain details or definitions about OnCore API services. So for further details you may read the WSDL file or web page that was provided to you - use a Desktop client like [SoapUI](https://www.soapui.org/) for that.
 
