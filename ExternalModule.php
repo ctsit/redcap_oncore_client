@@ -17,11 +17,7 @@ use OnCoreClient\OnCoreClient;
  */
 class ExternalModule extends AbstractExternalModule {
 
-    function redcap_module_system_enable($prefix, $version) {
-        if ($this->PREFIX != $prefix) {
-            return;
-        }
-
+    function redcap_module_system_enable($version) {
         $q = $this->query('SHOW TABLES LIKE "redcap_oncore_client_log"');
         if (db_num_rows($q)) {
             return;
@@ -44,11 +40,7 @@ class ExternalModule extends AbstractExternalModule {
         $this->query($sql);
     }
 
-    function redcap_module_system_disable($prefix, $version) {
-        if ($this->PREFIX != $prefix) {
-            return;
-        }
-
+    function redcap_module_system_disable($version) {
         $q = $this->query('SHOW TABLES LIKE "redcap_oncore_client_log"');
         if (!db_num_rows($q)) {
             return;
