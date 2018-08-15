@@ -1,34 +1,41 @@
 <?php
 
-namespace OnCoreClient;
-
 // TODO: Button to clean up all logs
 // TODO: Exposed filters (by date range, operation and success)
 
-require_once \ExternalModules\ExternalModules::getProjectHeaderPath();
+require_once APP_PATH_DOCROOT . 'ControlCenter/header.php';
 
 define('ONCORE_CLIENT_LOGS_MAX_LIST_SIZE', 25);
 define('ONCORE_CLIENT_LOGS_MAX_PAGER_SIZE', 10);
 
-$pid = $_GET['pid'];
-$module = new ExternalModule\ExternalModule($pid);
 $curr_page = empty($_GET['pager']) ? 1 : $_GET['pager'];
 
-// Getting logs.
-$q = $module->query('
-    SELECT id, operation, success, timestamp, request, response, error_msg
-    FROM redcap_oncore_client_log
-    WHERE pid = ' . db_escape($pid) . '
-    ORDER BY id DESC
-    LIMIT ' . ONCORE_CLIENT_LOGS_MAX_LIST_SIZE . '
-    OFFSET ' . ($curr_page - 1) * ONCORE_CLIENT_LOGS_MAX_LIST_SIZE
-);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $module->query('DELETE FROM redcap_oncore_client_log');
 
-$pager = array();
-$rows = array();
+    // Showing success message.
+    echo RCView::div(array(
+        'class' => 'darkgreen',
+        'style' => 'margin-bottom: 20px;',
+    ), RCView::img(array('src' => APP_PATH_IMAGES . 'tick.png')) . ' The logs have been cleared successfully.');
+}
+else {
+    // Getting logs.
+    $q = $module->query('
+        SELECT id, pid, operation, success, timestamp, request, response, error_msg
+        FROM redcap_oncore_client_log
+        ORDER BY id DESC
+        LIMIT ' . ONCORE_CLIENT_LOGS_MAX_LIST_SIZE . '
+        OFFSET ' . ($curr_page - 1) * ONCORE_CLIENT_LOGS_MAX_LIST_SIZE
+    );
 
-if (db_num_rows($q)) {
-    $table_header = array('#', 'Operation', 'Success', 'Date', '');
+    $db = new RedCapDB();
+    $pager = array();
+    $rows = array();
+}
+
+if (isset($q) && db_num_rows($q)) {
+    $table_header = array('#', 'Project', 'Operation', 'Success', 'Date', '');
     $modal_header = array(
         'request' => 'Request',
         'response' => 'Response',
@@ -50,7 +57,11 @@ if (db_num_rows($q)) {
 
             $doc->loadXML($row[$key]);
             $row[$key] = $doc->saveXML();
-            $row[$key] = '<pre>' . htmlspecialchars($row[$key]) . '</pre>';
+            $row[$key] = '<pre>' . REDCap::escapeHtml($row[$key]) . '</pre>';
+        }
+
+        if ($project = $db->getProject($row['pid'])) {
+            $row['pid'] = '(' . $row['pid'] . ') ' . REDCap::escapeHtml($project->app_title);
         }
 
         $date->setTimestamp($row['timestamp']);
@@ -191,12 +202,10 @@ if (db_num_rows($q)) {
 }
 ?>
 
-<div class="projhdr">
-    <img src="<?php echo APP_PATH_IMAGES; ?>report.png"> OnCore API Logs
-</div>
+<h4><img src="<?php echo APP_PATH_IMAGES; ?>report.png"> OnCore API Logs</h4>
 
 <?php if (empty($rows)): ?>
-    <p>There are no logs yet.</p>
+    <p>There are no logs.</p>
 <?php else: ?>
     <div class="table-responsive">
         <table class="table table-striped">
@@ -215,14 +224,18 @@ if (db_num_rows($q)) {
                 </tr>
             <?php endforeach; ?>
         </table>
+
+        <form method="post" action="<?php echo $module->getUrl('plugins/logs.php'); ?>">
+            <button type="submit" class="btn btn-danger">Clean logs</button>
+        </form>
     </div>
     <?php foreach ($modals as $id => $modal): ?>
         <div class="modal fade" id="oncore-client-log-<?php echo $id; ?>" role="dialog">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4>Request Details</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body" style="overflow-wrap:break-word;word-wrap:break-word;"><form>
                         <?php foreach ($modal_header as $key => $label): ?>
@@ -249,3 +262,5 @@ if (db_num_rows($q)) {
         </nav>
     <?php endif; ?>
 <?php endif; ?>
+
+<?php require_once APP_PATH_DOCROOT . 'ControlCenter/footer.php'; ?>

@@ -1,33 +1,49 @@
 # REDCap OnCore Client
-This is a REDCap external module that provides integration with OnCore SOAP API.
+This is a REDCap external module that provides integration with OnCore.
+
+It allows administrators to sync OnCore subjects with data entries, and developers to call OnCore API via SOUP.
 
 ## Prerequisites
-- REDCap >= ?? (awaiting for [this pull request](https://github.com/vanderbilt/redcap-external-modules/pull/74) to be reviewed, merged and released)
+- REDCap >= 8.4.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 
 ## Installation
 - Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v<version_number>`.
-- Go to **Control Center > Manage External Modules** and enable OnCore Client.
-- Go to your project home page, click on **Manage External Modules** link, and then enable OnCore Client.
+- Go to **Control Center > External Modules** and enable OnCore Client.
+- Go to your project home page, click on **External Modules** link, and then enable OnCore Client.
 
-## Configuration
-Access **Manage External Modules** section of your project, click on OnCore Client's configure button, and fill the configuration form with your credentials.
+## Main Configuration
+Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials.
 
 - **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
 - **Login**: Your OnCore client user ID
 - **Passord**: Your OnCore client password
-- **Clear logs after (days)**: The number of days that the API log entries should remain available on REDCap
+- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain` - this is required to associate projects with protocols
+- **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
 
 ![Config form](img/config_form.png)
 
-## How to make API calls
+## Associating a Project with a Protocol
+
+If you already set a valid SIP URL, you may associate a project with a protocol.
+
+To do that, access **External Modules** section of your project, make sure OnCore Client is enabled, and then click on its configure button.
+
+![Protocol association](img/protocol_association.png)
+
+## Sync OnCore subjects
+
+TODO.  
+
+
+## Using the API
 
 Here is an example of an API request to get protocol information (`getProtocol`).
 
 ```php
 <?php
 
-$module = \ExternalModules\ExternalModules::getModuleInstance('redcap_oncore_client', 'v1.0');
+$module = \ExternalModules\ExternalModules::getModuleInstance('redcap_oncore_client');
 $client = $module->getSoapClient();
 
 $result = $client->request('getProtocol', array('protocolNo' => 'OCR20002'));
@@ -47,9 +63,9 @@ This module is still on construction so the supported operations so far are:
 - `registerExistingSubjectToProtocol`
 
 ## Logs page
-You may track your API calls by accessing the logs page. Go to your project page and click on **OnCore Logs** at the left menu.
+You may track your API calls by accessing the logs page. Go to **Control Center** and click on **OnCore Logs** at the left menu.
 
 ![Logs page list](img/logs_page.png)
 ![Request](img/request_details.png)
 
-Remember that in order to avoid storage problems, you can configure the lifetime of a log entry on the configuration page. There is a cron job that checks every day for expired log entries and remove them.
+You may clear the logs by clicking on **Clean logs** button.

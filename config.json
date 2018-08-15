@@ -3,6 +3,7 @@
     "namespace": "OnCoreClient\\ExternalModule",
     "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
     "permissions": [
+        "redcap_every_page_top",
         "redcap_module_system_enable",
         "redcap_module_system_disable",
         "redcap_every_page_top"
@@ -19,7 +20,7 @@
             "institution": "University of Florida - CTSI"
         }
     ],
-    "project-settings": [
+    "system-settings": [
         {
             "key": "wsdl",
             "name": "WSDL",
@@ -41,27 +42,40 @@
             "functionName": "OnCoreClient.passwordFieldHandler"
         },
         {
-            "key": "log_lifetime",
-            "name": "Clear logs after (days)",
+            "key": "sip",
+            "name": "SIP URL",
             "type": "text"
+        },
+        {
+            "key": "log_enabled",
+            "name": "Log requests",
+            "type": "checkbox"
+        }
+    ],
+    "project-settings": [
+        {
+            "key": "protocol_no",
+            "name": "Protocol",
+            "type": "dropdown",
+            "select2": true,
+            "choices": [
+                {
+                    "value": "",
+                    "name": "-- Select --"
+                }
+            ]
         }
     ],
     "links": {
-        "project": [
+        "control-center": [
             {
                 "name": "OnCore API Logs",
                 "icon": "report",
                 "url": "plugins/logs.php"
-           }
+            }
         ]
     },
-    "crons": [
-        {
-            "cron_name": "oncore_client_logs_clean_up",
-            "cron_description": "Daily job that cleans up old logs.",
-            "method": "logsCleanUp",
-            "cron_frequency": "86400",
-            "cron_max_run_time": "60"
-        }
-    ]
+    "compatibility": {
+        "redcap-version-min": "8.4.0"
+    }
 }
