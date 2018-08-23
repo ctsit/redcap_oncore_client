@@ -65,6 +65,7 @@ if (isset($q) && db_num_rows($q)) {
         }
 
         $date->setTimestamp($row['timestamp']);
+
         $row['timestamp'] = $date->format('m/d/Y - h:i:s a');
         $row['details'] = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#oncore-client-log-' . $row['id'] . '">See details</button>';
         $row['success'] = $row['success'] ? 'accept' : 'cross';
