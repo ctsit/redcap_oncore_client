@@ -9,7 +9,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="oncore_sync_subject_id">
+                    <input type="hidden" name="oncore_subject_link_entity_id">
                     <div class="form-group">
                         <label for="oncore-subject-link-select">Choose the record to link with</label>
                         <select id="oncore-subject-link-select" class="form-control" name="oncore_subject_link_record_id" required>
@@ -21,7 +21,7 @@
                     </div>
                     <div class="form-group">
                         <div class="form-check">
-                            <input id="oncore-subject-link-sync" class="form-check-input" name="oncore_subject_link_sync" type="checkbox" checked="true">
+                            <input id="oncore-subject-link-sync" class="form-check-input" name="oncore_subject_link_sync" type="checkbox" checked="true" value="true">
                             <label for="oncore-subject-link-sync" class="form-check-label">Sync data</label>
                         </div>
                     </div>

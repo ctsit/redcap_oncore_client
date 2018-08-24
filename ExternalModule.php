@@ -15,7 +15,6 @@ use RCView;
 use REDCap;
 use REDCapEntity\EntityDB;
 use REDCapEntity\EntityFactory;
-use REDCapEntity\StatusMessageQueue;
 
 /**
  * ExternalModule class for OnCore Client.
@@ -128,6 +127,7 @@ class ExternalModule extends AbstractExternalModule {
                     'method' => 'sync',
                     'color' => 'green',
                     'success_message' => 'The subjects have been synced successfully.',
+                    'confirmation_message' => 'Subjects can be created, updated or deleted if you sync the selected items. This action cannot be undone.',
                 ],
             ],
         ];
@@ -145,124 +145,6 @@ class ExternalModule extends AbstractExternalModule {
         $log_enabled = $this->getSystemSetting('log_enabled');
 
         return new OnCoreClient($wsdl, $login, $password, $log_enabled);
-    }
-
-    function rebuildSubjectsSyncList() {
-        if (!$mappings = self::$subjectMappings) {
-            return false;
-        }
-
-        $client = $this->getSoapClient();
-
-        if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
-            return;
-        }
-
-        if (!$result = $client->request('getProtocolSubjects', array('ProtocolNo' => $protocol_no))) {
-            return;
-        }
-
-        if (empty($result->ProtocolSubjects)) {
-            return;
-        }
-
-        global $Proj;
-
-        if (!$this->query('DELETE FROM `redcap_entity_oncore_sync_subject` WHERE project_id = ' . intval($Proj->project_id))) {
-            return;
-        }
-
-        // TODO: include mapping fields to calculate diff.
-
-        $subject_id_field = $mappings['mappings']['PrimaryIdentifier'];
-        $records_data = REDCap::getData($Proj->project_id, 'array', null, $subject_id_field, $mappings['event_id']);
-
-        if ($subject_id_field == $Proj->table_pk) {
-            $records = array_keys($records_data);
-            $records = array_combine($records, $records);
-        }
-        else {
-            $records = [];
-            foreach ($records_data as $record => $data) {
-                if (empty($data[$subject_id_field])) {
-                    // TODO: keep ignoring records with no subject ID?
-                    continue;
-                }
-
-                $records[$data[$subject_id_field]] = $record;
-            }
-        }
-
-        $changed = [];
-        $factory = new EntityFactory();
-
-        // TODO: batch.
-        foreach ($result->ProtocolSubjects as $subject) {
-            $status = $subject->status;
-            $subject = $subject->Subject;
-
-            if (isset($records[$subject->PrimaryIdentifier])) {
-                $changed[$records[$subject->PrimaryIdentifier]] = $subject;
-                unset($records[$subject->PrimaryIdentifier]);
-
-                continue;
-            }
-
-            $data = [
-                'subject_id' => $subject->PrimaryIdentifier,
-                'protocol_no' => $result->ProtocolNo,
-                'type' => 'create',
-                'status' => $status,
-                'data' => json_encode($subject),
-            ];
-
-            $factory->create('oncore_sync_subject', $data);
-        }
-
-        if (!empty($changed)) {
-            $records_data = REDCap::getData($Proj->project_id, 'array', array_keys($changed), $mappings['mappings'], $mappings['event_id']);
-
-            foreach ($records_data as $record => $data) {
-                $data = $data[$mappings['event_id']];
-                $diff = [];
-
-                foreach ($mappings['mappings'] as $key => $field) {
-                    $value = $changed[$record]->{$key};
-                    if ($value === null) {
-                        $value = '';
-                    }
-
-                    if ($value !== $data[$field]) {
-                        $diff[$key] = [$data[$field], $value];
-                    }
-                }
-
-                if (!empty($diff)) {
-                    $data = [
-                        'subject_id' => (string) $changed[$record]->PrimaryIdentifier,
-                        'record_id' => (string) $record,
-                        'protocol_no' => $result->ProtocolNo,
-                        'type' => 'update',
-                        'data' => json_encode($diff),
-                    ];
-
-                    $factory->create('oncore_sync_subject', $data);
-                }
-            }
-        }
-
-        foreach ($records as $subject_id => $record) {
-            $data = [
-                'subject_id' => (string) $subject_id,
-                'record_id' => (string) $record,
-                'protocol_no' => $result->ProtocolNo,
-                'type' => 'delete',
-            ];
-
-            $factory->create('oncore_sync_subject', $data);
-        }
-
-        StatusMessageQueue::enqueue('The cache has been rebuilt successfully.');
     }
 
     function setSubjectMappings() {
