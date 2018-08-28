@@ -1,4 +1,4 @@
-<div class="modal fade" id="oncore-data-<?php echo $id; ?>" role="dialog">
+<div class="modal fade" id="oncore-subject-data-<?php echo $id; ?>" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">

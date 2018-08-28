@@ -66,20 +66,89 @@ class ExternalModule extends AbstractExternalModule {
     function redcap_entity_types() {
         $types = [];
 
-        $types['oncore_sync_subject'] = [
-            'label' => 'OnCore Sync Subject',
-            'label_plural' => 'OnCore Sync Subjects',
+        $types['oncore_subject_diff'] = [
+            'label' => 'OnCore-REDCap Subject Diff',
+            'label_plural' => 'OnCore-REDCap Subject Diffs',
             'special_keys' => [
-                'label' => 'subject_id',
+                'project' => 'project_id',
+                'label' => 'subject_name',
+            ],
+            'class' => [
+                'name' => 'OnCoreClient\Entity\SubjectDiff',
+                'path' => 'classes/entity/SubjectDiff.php',
+            ],
+            'properties' => [
+                'internal_subject_id' => [
+                    'name' => 'OnCore ID',
+                    'type' => 'entity_reference',
+                    'entity_type' => 'oncore_subject',
+                ],
+                'subject_id' => [
+                    'name' => 'OnCore subject ID',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'record_id' => [
+                    'name' => 'REDCap record ID',
+                    'type' => 'text',
+                ],
+                'project_id' => [
+                    'name' => 'Project ID',
+                    'type' => 'project',
+                    'required' => true,
+                ],
+                'subject_name' => [
+                    'name' => 'Name',
+                    'type' => 'text',
+                ],
+                'subject_dob' => [
+                    'name' => 'DOB',
+                    'type' => 'date',
+                ],
+                'type' => [
+                    'name' => 'Type',
+                    'type' => 'text',
+                    'required' => true,
+                    'choices' => [
+                        'oncore_only' => 'Incoming from OnCore',
+                        'redcap_only' => 'Doesn\'t exist on OnCore',
+                        'data_diff' => 'Needs update',
+                    ],
+                ],
+                'diff' => [
+                    'name' => 'Data',
+                    'type' => 'json',
+                ],
+            ],
+            'operations' => [
+                'create' => false,
+                'update' => false,
+                'delete' => false,
+            ],
+            'bulk_operations' => [
+                'pull' => [
+                    'label' => 'Pull OnCore Subjects',
+                    'method' => 'pull',
+                    'color' => 'green',
+                    'success_message' => 'The subjects have been created/updated successfully.',
+                    'confirmation_message' => 'Records can be created and/or overriden if you pull the selected items. This action cannot be undone.',
+                ],
+            ],
+        ];
+
+        $types['oncore_subject'] = [
+            'label' => 'OnCore Subject',
+            'label_plural' => 'OnCore Subjects',
+            'special_keys' => [
                 'project' => 'project_id',
             ],
             'class' => [
-                'name' => 'OnCoreClient\Entity\SyncSubject',
-                'path' => 'classes/entity/SyncSubject.php',
+                'name' => 'OnCoreClient\Entity\OnCoreSubject',
+                'path' => 'classes/entity/OnCoreSubject.php',
             ],
             'properties' => [
                 'subject_id' => [
-                    'name' => 'Subject ID',
+                    'name' => 'OnCore Primary Identifier',
                     'type' => 'text',
                     'required' => true,
                 ],
@@ -93,20 +162,6 @@ class ExternalModule extends AbstractExternalModule {
                     'type' => 'project',
                     'required' => true,
                 ],
-                'type' => [
-                    'name' => 'Sync action',
-                    'type' => 'text',
-                    'required' => true,
-                    'choices' => [
-                        'create' => 'Create',
-                        'update' => 'Update',
-                        'delete' => 'Delete',
-                    ],
-                ],
-                'record_id' => [
-                    'name' => 'REDCap Record ID',
-                    'type' => 'text',
-                ],
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
@@ -115,21 +170,7 @@ class ExternalModule extends AbstractExternalModule {
                     'name' => 'Data',
                     'type' => 'json',
                 ],
-            ],
-            'operations' => [
-                'create' => false,
-                'update' => false,
-                'delete' => false,
-            ],
-            'bulk_operations' => [
-                'sync' => [
-                    'label' => 'Sync',
-                    'method' => 'sync',
-                    'color' => 'green',
-                    'success_message' => 'The subjects have been synced successfully.',
-                    'confirmation_message' => 'Subjects can be created, updated or deleted if you sync the selected items. This action cannot be undone.',
-                ],
-            ],
+            ]
         ];
 
         return $types;
@@ -203,7 +244,7 @@ class ExternalModule extends AbstractExternalModule {
         if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
             $protocols = [];
             foreach ($xml->protocol as $item) {
-                $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml($item->title);
+                $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
             }
 
             $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];

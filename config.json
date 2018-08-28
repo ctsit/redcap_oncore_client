@@ -194,9 +194,9 @@
         ],
         "project": [
             {
-                "name": "OnCore Subjects Sync",
+                "name": "Pull OnCore Subjects",
                 "icon": "arrow_rotate_clockwise",
-                "url": "plugins/subjects_sync.php"
+                "url": "plugins/subjects_pull.php"
             }
         ]
     }

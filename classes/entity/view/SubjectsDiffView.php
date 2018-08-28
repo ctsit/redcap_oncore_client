@@ -10,18 +10,20 @@ use REDCap;
 use REDCapEntity\EntityView;
 use REDCapEntity\StatusMessageQueue;
 
-class SubjectsSyncView extends EntityView {
+class SubjectsDiffView extends EntityView {
+
+    protected $linkToRecordEnabled = false;
 
     protected function renderAddButton() {
-        echo RCView::p([], 'For performance reasons, ' . RCView::b([], 'this list is cached') . ', so it might not reflect the current OnCore data.');
-        echo RCView::p([], 'Make sure OnCore data is updated before taking any actions. To rebuild/refresh cache, click on "Rebuild cache" button below.');
+        echo RCView::p([], 'For performance reasons, ' . RCView::b([], 'OnCore data is cached') . ' on this system, so this list might not include the latest OnCore updates.');
+        echo RCView::p([], 'Make sure OnCore data is updated before taking any actions. To refresh cache, click on "Refresh OnCore data" button below.');
 
         $btn = RCView::i(['class' => 'fas fa-sync-alt']);
         $btn = RCView::button([
             'type' => 'submit',
-            'name' => 'subjects_cache_rebuild',
-            'class' => 'btn btn-primary',
-        ], $btn . ' Rebuild cache');
+            'name' => 'oncore_subjects_cache_clear',
+            'class' => 'btn btn-secondary btn-sm',
+        ], $btn . ' Refresh OnCore data');
 
         echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 20px;'], $btn);
     }
@@ -34,16 +36,17 @@ class SubjectsSyncView extends EntityView {
             return;
         }
 
-        if (!$this->listIsUpdated()) {
-            $this->rebuildSubjectsSyncList();
+        if (!$this->isListUpdated()) {
+            $this->rebuildSubjectsDiffList();
         }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            if (isset($_POST['subjects_cache_rebuild'])) {
-                $this->rebuildSubjectsSyncList();
+            if (isset($_POST['oncore_subjects_cache_clear'])) {
+                $this->clearOnCoreSubjectsCache();
+                $this->rebuildSubjectsDiffList();
             }
             elseif (isset($_POST['oncore_subject_link_record_id'])) {
-                $entity = $this->entityFactory->getInstance('oncore_sync_subject', $_POST['oncore_subject_link_entity_id']);
+                $entity = $this->entityFactory->getInstance('oncore_subject_diff', $_POST['oncore_subject_link_entity_id']);
 
                 if ($entity && $entity->linkToRecord($_POST['oncore_subject_link_record_id'], !empty($_POST['oncore_subject_link_sync']))) {
                     StatusMessageQueue::enqueue('The subject has been linked to the record successfully.');
@@ -54,16 +57,13 @@ class SubjectsSyncView extends EntityView {
             }
         }
 
-        parent::renderPageBody();
-
-        if (empty($this->rows)) {
-            return;
-        }
-
         $records = $this->getLinkToRecordOptions();
-
-        $this->jsFiles[] = $this->module->getUrl('js/subjects_sync.js');
         include $this->module->getModulePath() . 'templates/link_modal.php';
+
+        $this->linkToRecordEnabled = !empty($records);
+        $this->jsFiles[] = $this->module->getUrl('js/subjects_sync.js');
+
+        parent::renderPageBody();
 
         ExternalModules::addResource(ExternalModules::getManagerCSSDirectory() . 'select2.css');
         ExternalModules::addResource(ExternalModules::getManagerJSDirectory() . 'select2.js');
@@ -71,25 +71,24 @@ class SubjectsSyncView extends EntityView {
 
     protected function getTableHeaderLabels() {
         $header = parent::getTableHeaderLabels();
-        $header = [
-            'subject_id' => $header['subject_id'],
-            'name' => 'Name',
-            'type' => $header['type'],
-            'record_id' => $header['record_id'],
-            'status' => $header['status'],
-            '__operations' => 'Operations',
-        ];
+        unset($header['id'], $header['internal_subject_id'], $header['updated'], $header['created']);
+
+        $header['__operations'] = 'Operations';
 
         global $table_pk;
         $mappings = ExternalModule::$subjectMappings['mappings'];
 
         if ($table_pk == $mappings['PrimaryIdentifier']) {
-            $header['subject_id'] = 'Subject/Record ID';
+            $header['subject_id'] = 'Oncore/REDCap ID';
             unset($header['record_id']);
         }
 
         if (!isset($mappings['FirstName']) || !isset($mappings['LastName'])) {
-            unset($header['name']);
+            unset($header['subject_name']);
+        }
+
+        if (!isset($mappings['BirthDate'])) {
+            unset($header['subject_dob']);
         }
 
         return $header;
@@ -99,58 +98,85 @@ class SubjectsSyncView extends EntityView {
         $row = parent::buildTableRow($entity, $bulk_operations);
         $type = $entity->getType();
         $id = $entity->getId();
+        $labels = ExternalModule::$subjectMappings['labels'];
 
         $row['__operations'] = '';
 
-        if ($type == 'create') {
-            $row['__operations'] = RCView::button([
+        if ($subject = $entity->getSubject()) {
+            $row['__operations'] .= RCView::button([
+                'class' => 'btn btn-info btn-xs',
+                'data-toggle' => 'modal',
+                'data-target' => '#oncore-subject-data-' . $id,
+            ], 'View OnCore data');
+
+            $subject = $subject->getData();
+            $data = [];
+
+            foreach ($subject['data'] as $key => $value) {
+                if (isset($labels[$key])) {
+                    $data[$labels[$key]] = $value;
+                }
+            }
+
+            include $this->module->getModulePath() . 'templates/data_modal.php';
+        }
+
+        if ($type == 'oncore_only') {
+            $opts = [
                 'class' => 'btn btn-success btn-xs oncore-subject-link-btn',
                 'data-toggle' => 'modal',
                 'data-target' => '#oncore-subject-link',
                 'data-entity_id' => $id,
-            ], 'Link to record');
+            ];
+
+            if (!$this->linkToRecordEnabled) {
+                $opts['disabled'] = true;
+                $opts['title'] = 'There are no available records to link';
+            }
+
+            $row['__operations'] .= RCView::button($opts, 'Link to record');
         }
         else {
+            if ($type == 'data_diff') {
+                $row['__operations'] .= ' ' . RCView::button([
+                    'class' => 'btn btn-info btn-xs',
+                    'data-toggle' => 'modal',
+                    'data-target' => '#oncore-subject-diff-' . $id,
+                ], 'View diff');
+
+                $data = $entity->getData();
+                $diff = [];
+
+                foreach ($data['diff'] as $key => $values) {
+                    if (isset($labels[$key])) {
+                        $diff[$labels[$key]] = $values;
+                    }
+                }
+
+                include $this->module->getModulePath() . 'templates/diff_modal.php';
+            }
+            else {
+                $row['__bulk_op'] = '';
+            }
+
             $col = isset($row['record_id']) ? 'record_id' : 'subject_id';
-            $row[$col] = RCView::a(['href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . PROJECT_ID . '&id=' . $row[$col]], $row[$col]);
-
-            if ($type == 'delete') {
-                return $row;
-            }
+            $row['__operations'] .= RCView::a([
+                'class' => 'btn btn-info btn-xs',
+                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . htmlspecialchars(PROJECT_ID . '&id=' . $row[$col] . '&arm=' . getArm()),
+                'role' => 'button',
+                'target' => '_blank',
+                'style' => 'color: #fff; font-size: 12px;',
+            ], 'Go to REDCap record');
         }
 
-        if (isset($this->header['name'])) {
-            $data = $entity->getData();
-            $row['name'] = $data['data']->FirstName . ' ' . $data['data']->LastName;
-        }
-
-        $labels = ExternalModule::$subjectMappings['labels'];
-        $entity_data = $entity->getData();
-        $data = [];
-
-        foreach ($entity_data['data'] as $key => $value) {
-            if (isset($labels[$key])) {
-                $data[$labels[$key]] = $value;
-            }
-        }
-
-        $op = $type == 'update' ? 'diff' : 'data';
-
-        $row['__operations'] = RCView::button([
-            'class' => 'btn btn-info btn-xs',
-            'data-toggle' => 'modal',
-            'data-target' => '#oncore-data-' . $id,
-        ], 'View ' . $op) . $row['__operations'];
-
-        include $this->module->getModulePath() . 'templates/' . $op . '_modal.php';
         return $row;
     }
 
     protected function getRowAttributes($entity) {
         $colors = [
-            'create' => 'd4edda',
-            'update' => 'fff3cd',
-            'delete' => 'f8d7da',
+            'oncore_only' => 'fff3cd',
+            'redcap_only' => 'cce5ff',
+            'data_diff' => 'd4edda',
         ];
 
         return ['style' => 'background-color: #' . $colors[$entity->getType()] . ';'];
@@ -158,10 +184,10 @@ class SubjectsSyncView extends EntityView {
 
     protected function bulkOperationSubmit() {
         parent::bulkOperationSubmit();
-        $this->rebuildSubjectsSyncList();
+        $this->rebuildSubjectsDiffList();
     }
 
-    protected function listIsUpdated() {
+    protected function isListUpdated() {
         $sql = '
             SELECT description FROM redcap_log_event
             WHERE
@@ -170,7 +196,8 @@ class SubjectsSyncView extends EntityView {
                     "Update record",
                     "Delete record",
                     "Modify configuration for external module \"' . $this->module->PREFIX . '_' . $this->module->VERSION . '\" for project",
-                    "OnCore Subjects Sync cache clear"
+                    "OnCore-REDCap Diff rebuild",
+                    "Erase all data"
                 )
             ORDER BY log_event_id DESC LIMIT 1';
 
@@ -180,10 +207,10 @@ class SubjectsSyncView extends EntityView {
         }
 
         $last_event = db_fetch_assoc($q);
-        return $last_event['description'] == 'OnCore Subjects Sync cache clear';
+        return $last_event['description'] == 'OnCore-REDCap Diff rebuild';
     }
 
-    protected function rebuildSubjectsSyncList() {
+    protected function clearOnCoreSubjectsCache() {
         if (!$mappings = ExternalModule::$subjectMappings) {
             return;
         }
@@ -202,13 +229,35 @@ class SubjectsSyncView extends EntityView {
             return;
         }
 
-        global $table_pk;
-
-        if (!$this->module->query('DELETE FROM redcap_entity_oncore_sync_subject WHERE project_id = ' . intval(PROJECT_ID))) {
+        if (!$this->module->query('DELETE FROM redcap_entity_oncore_subject WHERE project_id = ' . intval(PROJECT_ID))) {
             return;
         }
 
-        // TODO: include mapping fields to calculate diff.
+        foreach ($result->ProtocolSubjects as $subject) {
+            $data = [
+                'subject_id' => $subject->Subject->PrimaryIdentifier,
+                'protocol_no' => $result->ProtocolNo,
+                'status' => $subject->Status,
+                'data' => json_encode($subject->Subject),
+            ];
+
+            $this->entityFactory->create('oncore_subject', $data);
+        }
+
+        REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
+        StatusMessageQueue::enqueue('The cache has been refreshed successfully.');
+    }
+
+    protected function rebuildSubjectsDiffList() {
+        if (!$mappings = ExternalModule::$subjectMappings) {
+            return;
+        }
+
+        if (!$this->module->query('DELETE FROM redcap_entity_oncore_subject_diff WHERE project_id = ' . intval(PROJECT_ID))) {
+            return;
+        }
+
+        global $table_pk;
 
         $subject_id_field = $mappings['mappings']['PrimaryIdentifier'];
         $records_data = REDCap::getData(PROJECT_ID, 'array', null, $subject_id_field, $mappings['event_id']);
@@ -228,40 +277,44 @@ class SubjectsSyncView extends EntityView {
             }
         }
 
+        if (!$subjects = $this->entityFactory->query('oncore_subject')->execute()) {
+            return;
+        }
+
         $changed = [];
 
-        // TODO: batch.
-        foreach ($result->ProtocolSubjects as $subject) {
-            $status = $subject->status;
-            $subject = $subject->Subject;
+        foreach ($subjects as $subject) {
+            $data = $subject->getData();
+            $subject_id = $data['subject_id'];
 
-            if (isset($records[$subject->PrimaryIdentifier])) {
-                $changed[$records[$subject->PrimaryIdentifier]] = $subject;
-                unset($records[$subject->PrimaryIdentifier]);
+            if (isset($records[$subject_id])) {
+                $changed[$records[$subject_id]] = $data;
+                unset($records[$subject_id]);
 
                 continue;
             }
 
             $data = [
-                'subject_id' => $subject->PrimaryIdentifier,
-                'protocol_no' => $result->ProtocolNo,
-                'type' => 'create',
-                'status' => $status,
-                'data' => json_encode($subject),
+                'internal_subject_id' => $data['id'],
+                'subject_id' => (string) $subject_id,
+                'subject_name' => trim($data['data']->FirstName . ' ' . $data['data']->LastName),
+                'subject_dob' => strtotime($data['data']->BirthDate),
+                'type' => 'oncore_only',
             ];
 
-            $this->entityFactory->create('oncore_sync_subject', $data);
+            $this->entityFactory->create('oncore_subject_diff', $data);
         }
 
         if (!empty($changed)) {
             $records_data = REDCap::getData(PROJECT_ID, 'array', array_keys($changed), $mappings['mappings'], $mappings['event_id']);
 
             foreach ($records_data as $record => $data) {
+                $subject_data = $changed[$record];
                 $data = $data[$mappings['event_id']];
                 $diff = [];
 
                 foreach ($mappings['mappings'] as $key => $field) {
-                    $value = $changed[$record]->{$key};
+                    $value = $subject_data['data']->{$key};
                     if ($value === null) {
                         $value = '';
                     }
@@ -273,31 +326,44 @@ class SubjectsSyncView extends EntityView {
 
                 if (!empty($diff)) {
                     $data = [
-                        'subject_id' => (string) $changed[$record]->PrimaryIdentifier,
+                        'internal_subject_id' => $subject_data['id'],
+                        'subject_id' => (string) $subject_data['subject_id'],
                         'record_id' => (string) $record,
-                        'protocol_no' => $result->ProtocolNo,
-                        'type' => 'update',
-                        'data' => json_encode($diff),
+                        'subject_name' => trim($subject_data['data']->FirstName . ' ' . $subject_data['data']->LastName),
+                        'subject_dob' => $subject_data['data']->BirthDate ? strtotime($subject_data['data']->BirthDate) : null,
+                        'type' => 'data_diff',
+                        'diff' => json_encode($diff),
                     ];
 
-                    $this->entityFactory->create('oncore_sync_subject', $data);
+                    $this->entityFactory->create('oncore_subject_diff', $data);
                 }
             }
         }
+
+        $full_name_enabled = isset($mappings['mappings']['FirstName']) && isset($mappings['mappings']['LastName']);
+        $dob_enabled = isset($mappings['mappings']['BirthDate']);
 
         foreach ($records as $subject_id => $record) {
             $data = [
                 'subject_id' => (string) $subject_id,
                 'record_id' => (string) $record,
-                'protocol_no' => $result->ProtocolNo,
-                'type' => 'delete',
+                'type' => 'redcap_only',
             ];
 
-            $this->entityFactory->create('oncore_sync_subject', $data);
+            $record_data = $records_data[$record][$mappings['event_id']];
+            if ($full_name_enabled) {
+                $data['subject_name'] = trim($record_data[$mappings['mappings']['FirstName']] . ' ' . $record_data[$mappings['mappings']['LastName']]);
+            }
+
+            if ($dob_enabled) {
+                $dob = $record_data[$mappings['mappings']['BirthDate']];
+                $data['subject_dob'] = $dob ? strtotime($dob) : null;
+            }
+
+            $this->entityFactory->create('oncore_subject_diff', $data);
         }
 
-        REDCap::logEvent('OnCore Subjects Sync cache clear', '', '', null, null, PROJECT_ID);
-        StatusMessageQueue::enqueue('The cache has been rebuilt successfully.');
+        REDCap::logEvent('OnCore-REDCap Diff rebuild', '', '', null, null, PROJECT_ID);
     }
 
     protected function getLinkToRecordOptions() {
@@ -306,7 +372,6 @@ class SubjectsSyncView extends EntityView {
         $project_id = intval(PROJECT_ID);
         $mappings = ExternalModule::$subjectMappings['mappings'];
         $event_id = intval(ExternalModule::$subjectMappings['event_id']);
-
 
         $sql_extra_fields = '';
         $sql_extra_conds = '';
@@ -341,7 +406,7 @@ class SubjectsSyncView extends EntityView {
 
         $sql = '
             SELECT r.record record_id' . $sql_extra_fields . ' FROM redcap_data r
-            LEFT JOIN redcap_entity_oncore_sync_subject e ON
+            LEFT JOIN redcap_entity_oncore_subject_diff e ON
                 r.record = e.record_id AND
                 e.project_id = "' . $project_id . '"' . implode('', $sql_extra_joins) . '
             WHERE
@@ -349,8 +414,9 @@ class SubjectsSyncView extends EntityView {
                 r.project_id = ' . $project_id . ' AND
                 r.event_id = ' . $event_id . ' AND
                 r.instance IS NULL AND
-                (e.type = "delete"' . $sql_extra_conds . ')
+                (e.type = "redcap_only"' . $sql_extra_conds . ')
             ORDER BY r.record';
+
 
         if (!$q = $this->module->query($sql)) {
             return false;

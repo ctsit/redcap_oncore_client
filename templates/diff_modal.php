@@ -1,4 +1,4 @@
-<div class="modal fade" id="oncore-data-<?php echo $id; ?>" role="dialog">
+<div class="modal fade" id="oncore-subject-diff-<?php echo $id; ?>" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -17,7 +17,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data as $key => $values): ?>
+                        <?php foreach ($diff as $key => $values): ?>
                             <tr>
                                 <td scope="row"><strong><?php echo REDCap::escapeHtml($key); ?></strong></td>
                                 <td><?php echo REDCap::escapeHtml($values[0]); ?></td>

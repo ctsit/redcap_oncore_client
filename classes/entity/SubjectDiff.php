@@ -9,27 +9,30 @@ use REDCap;
 use Records;
 use REDCapEntity\Entity;
 
-class SyncSubject extends Entity {
-    protected $record_id;
+class SubjectDiff extends Entity {
+    protected $internal_subject_id;
     protected $subject_id;
+    protected $record_id;
     protected $project_id;
-    protected $protocol_no;
-    protected $status;
+    protected $subject_name;
+    protected $subject_dob;
     protected $type;
-    protected $data;
-
-    static protected $mappings;
-
-    function getSubjectId() {
-        return $this->subject_id;
-    }
+    protected $diff;
 
     function getType() {
         return $this->type;
     }
 
-    function sync($delete = false) {
-        if (!($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID) {
+    function getSubject() {
+        if (empty($this->internal_subject_id)) {
+            return false;
+        }
+
+        return $this->__factory->getInstance('oncore_subject', $this->internal_subject_id);
+    }
+
+    function pull($delete = false) {
+        if (!($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID || $this->type == 'redcap_only') {
             return false;
         }
 
@@ -37,35 +40,19 @@ class SyncSubject extends Entity {
 
         $event_id = $mappings['event_id'];
         $arm = $Proj->eventInfo[$event_id]['arm_num'];
+        $subject = $this->getSubject();
 
-        if ($this->type == 'delete') {
-            global $multiple_arms, $randomization, $status;
-            Records::deleteRecord($this->record_id, $table_pk, $multiple_arms, $randomization, $status, false, $arm);
-
-            if ($delete) {
-                return $this->delete();
-            }
-
-            return true;
-        }
-
-        $remote_data = json_decode($this->data, true);
+        $remote_data = $subject->getData();
+        $remote_data = $remote_data['data'];
 
         $record = $this->record_id;
         $data = [];
 
-        if ($this->type == 'create') {
-            $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['PrimaryIdentifier'] : getAutoId();
-            $record = Records::addNewRecordToCache($record, $arm, $event_id);
+        $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['PrimaryIdentifier'] : getAutoId();
+        $record = Records::addNewRecordToCache($record, $arm, $event_id);
 
-            foreach ($mappings['mappings'] as $key => $field) {
-                $data[$field] = $remote_data[$key];
-            }
-        }
-        else {
-            foreach ($remote_data as $key => $diff) {
-                $data[$mappings['mappings'][$key]] = $diff[1];
-            }
+        foreach ($mappings['mappings'] as $key => $field) {
+            $data[$field] = $remote_data->{$key};
         }
 
         $data = [$record => [$event_id => $data]];
@@ -82,7 +69,7 @@ class SyncSubject extends Entity {
     }
 
     function linkToRecord($record, $sync = true, $delete = false) {
-        if ($this->type != 'create' || !($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID) {
+        if ($this->type != 'oncore_only' || !($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID) {
             return false;
         }
 
@@ -103,13 +90,17 @@ class SyncSubject extends Entity {
             Records::saveData($this->project_id, 'array', [$record => [$event_id => [$mappings['mappings']['PrimaryIdentifier'] => $this->subject_id]]]);
         }
 
-        $remote_data = json_decode($this->data, true);
+        $subject = $this->getSubject();
+
+        $remote_data = $subject->getData();
+        $remote_data = $remote_data['data'];
+
         $record_data = REDCap::getData($this->project_id, 'array', $record, $mappings['mappings'], $event_id);
         $diff = [];
 
         foreach ($mappings['mappings'] as $key => $field) {
-            if ($remote_data[$key] !== $record_data[$field]) {
-                $diff[$key] = [$record_data[$field], $remote_data[$key]];
+            if ($remote_data->{$key} !== $record_data[$field]) {
+                $diff[$key] = [$record_data[$field], $remote_data->{$key}];
             }
         }
 
@@ -117,7 +108,7 @@ class SyncSubject extends Entity {
             return $this->delete();
         }
 
-        $this->setData(['type' => 'update', 'record_id' => $record, 'data' => $diff]);
+        $this->setData(['type' => 'data_diff', 'record_id' => $record, 'diff' => $diff]);
         if ($sync) {
             return $this->sync($delete);
         }
