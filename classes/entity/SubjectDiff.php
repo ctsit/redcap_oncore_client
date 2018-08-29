@@ -110,7 +110,7 @@ class SubjectDiff extends Entity {
 
         $this->setData(['type' => 'data_diff', 'record_id' => $record, 'diff' => $diff]);
         if ($sync) {
-            return $this->sync($delete);
+            return $this->pull($delete);
         }
 
         return true;

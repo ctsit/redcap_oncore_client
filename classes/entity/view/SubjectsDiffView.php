@@ -45,22 +45,24 @@ class SubjectsDiffView extends EntityView {
                 $this->clearOnCoreSubjectsCache();
                 $this->rebuildSubjectsDiffList();
             }
-            elseif (isset($_POST['oncore_subject_link_record_id'])) {
-                $entity = $this->entityFactory->getInstance('oncore_subject_diff', $_POST['oncore_subject_link_entity_id']);
+            elseif (isset($_POST['oncore_link_subject_id'])) {
+                $entity = $this->entityFactory->getInstance('oncore_subject_diff', $_POST['oncore_link_subject_id']);
 
-                if ($entity && $entity->linkToRecord($_POST['oncore_subject_link_record_id'], !empty($_POST['oncore_subject_link_sync']))) {
+                if ($entity && $entity->linkToRecord($_POST['oncore_link_record_id'], !empty($_POST['oncore_link_override']))) {
                     StatusMessageQueue::enqueue('The subject has been linked to the record successfully.');
                 }
                 else {
                     // TODO: error msg.
                 }
+
+                $this->rebuildSubjectsDiffList();
             }
         }
 
-        $records = $this->getLinkToRecordOptions();
+        $subjects = $this->getLinkToSubjectOptions();
         include $this->module->getModulePath() . 'templates/link_modal.php';
 
-        $this->linkToRecordEnabled = !empty($records);
+        $this->linkToRecordEnabled = !empty($subjects);
         $this->jsFiles[] = $this->module->getUrl('js/subjects_sync.js');
 
         parent::renderPageBody();
@@ -70,18 +72,10 @@ class SubjectsDiffView extends EntityView {
     }
 
     protected function getTableHeaderLabels() {
-        $header = parent::getTableHeaderLabels();
-        unset($header['id'], $header['internal_subject_id'], $header['updated'], $header['created']);
+        $header = parent::getTableHeaderLabels() + ['__operations' => 'Operations'];
+        unset($header['id'], $header['internal_subject_id'], $header['record_id'], $header['updated'], $header['created']);
 
-        $header['__operations'] = 'Operations';
-
-        global $table_pk;
         $mappings = ExternalModule::$subjectMappings['mappings'];
-
-        if ($table_pk == $mappings['PrimaryIdentifier']) {
-            $header['subject_id'] = 'Oncore/REDCap ID';
-            unset($header['record_id']);
-        }
 
         if (!isset($mappings['FirstName']) || !isset($mappings['LastName'])) {
             unset($header['subject_name']);
@@ -96,11 +90,11 @@ class SubjectsDiffView extends EntityView {
 
     protected function buildTableRow($entity, $bulk_operations = false) {
         $row = parent::buildTableRow($entity, $bulk_operations);
+        $row['__operations'] = '';
+
         $type = $entity->getType();
         $id = $entity->getId();
         $labels = ExternalModule::$subjectMappings['labels'];
-
-        $row['__operations'] = '';
 
         if ($subject = $entity->getSubject()) {
             $row['__operations'] .= RCView::button([
@@ -121,22 +115,18 @@ class SubjectsDiffView extends EntityView {
             include $this->module->getModulePath() . 'templates/data_modal.php';
         }
 
-        if ($type == 'oncore_only') {
-            $opts = [
-                'class' => 'btn btn-success btn-xs oncore-subject-link-btn',
-                'data-toggle' => 'modal',
-                'data-target' => '#oncore-subject-link',
-                'data-entity_id' => $id,
-            ];
+        if ($type != 'oncore_only') {
+            $col = isset($row['record_id']) ? 'record_id' : 'subject_id';
+            $row['__operations'] .= RCView::a([
+                'class' => 'btn btn-info btn-xs',
+                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . htmlspecialchars(PROJECT_ID . '&id=' . $row[$col] . '&arm=' . getArm()),
+                'role' => 'button',
+                'target' => '_blank',
+                'style' => 'color: #fff; font-size: 12px;',
+            ], 'Go to REDCap record');
 
-            if (!$this->linkToRecordEnabled) {
-                $opts['disabled'] = true;
-                $opts['title'] = 'There are no available records to link';
-            }
+            $data = $entity->getData();
 
-            $row['__operations'] .= RCView::button($opts, 'Link to record');
-        }
-        else {
             if ($type == 'data_diff') {
                 $row['__operations'] .= ' ' . RCView::button([
                     'class' => 'btn btn-info btn-xs',
@@ -144,7 +134,6 @@ class SubjectsDiffView extends EntityView {
                     'data-target' => '#oncore-subject-diff-' . $id,
                 ], 'View diff');
 
-                $data = $entity->getData();
                 $diff = [];
 
                 foreach ($data['diff'] as $key => $values) {
@@ -157,16 +146,20 @@ class SubjectsDiffView extends EntityView {
             }
             else {
                 $row['__bulk_op'] = '';
-            }
+                $opts = [
+                    'class' => 'btn btn-success btn-xs oncore-subject-link-btn',
+                    'data-toggle' => 'modal',
+                    'data-target' => '#oncore-subject-link',
+                    'data-record_id' => $data['record_id'],
+                ];
 
-            $col = isset($row['record_id']) ? 'record_id' : 'subject_id';
-            $row['__operations'] .= RCView::a([
-                'class' => 'btn btn-info btn-xs',
-                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . htmlspecialchars(PROJECT_ID . '&id=' . $row[$col] . '&arm=' . getArm()),
-                'role' => 'button',
-                'target' => '_blank',
-                'style' => 'color: #fff; font-size: 12px;',
-            ], 'Go to REDCap record');
+                if (!$this->linkToRecordEnabled) {
+                    $opts['disabled'] = true;
+                    $opts['title'] = 'There are no available subjects to link';
+                }
+
+                $row['__operations'] .= ' ' . RCView::button($opts, 'Link to subject');
+            }
         }
 
         return $row;
@@ -262,12 +255,15 @@ class SubjectsDiffView extends EntityView {
         $subject_id_field = $mappings['mappings']['PrimaryIdentifier'];
         $records_data = REDCap::getData(PROJECT_ID, 'array', null, $subject_id_field, $mappings['event_id']);
 
+        $not_linked = array_keys($records_data);
+        $not_linked = array_combine($not_linked, $not_linked);
+
         if ($subject_id_field == $table_pk) {
-            $records = array_keys($records_data);
-            $records = array_combine($records, $records);
+            $records = $not_linked;
         }
         else {
             $records = [];
+
             foreach ($records_data as $record => $data) {
                 $data = $data[$mappings['event_id']];
 
@@ -281,16 +277,17 @@ class SubjectsDiffView extends EntityView {
             return;
         }
 
-        $changed = [];
+        $linked = [];
 
         foreach ($subjects as $subject) {
             $data = $subject->getData();
             $subject_id = $data['subject_id'];
 
             if (isset($records[$subject_id])) {
-                $changed[$records[$subject_id]] = $data;
-                unset($records[$subject_id]);
+                $record = $records[$subject_id];
+                $linked[$record] = $data;
 
+                unset($not_linked[$record]);
                 continue;
             }
 
@@ -305,11 +302,11 @@ class SubjectsDiffView extends EntityView {
             $this->entityFactory->create('oncore_subject_diff', $data);
         }
 
-        if (!empty($changed)) {
-            $records_data = REDCap::getData(PROJECT_ID, 'array', array_keys($changed), $mappings['mappings'], $mappings['event_id']);
+        if (!empty($linked)) {
+            $records_data = REDCap::getData(PROJECT_ID, 'array', array_keys($linked), $mappings['mappings'], $mappings['event_id']);
 
             foreach ($records_data as $record => $data) {
-                $subject_data = $changed[$record];
+                $subject_data = $linked[$record];
                 $data = $data[$mappings['event_id']];
                 $diff = [];
 
@@ -340,98 +337,51 @@ class SubjectsDiffView extends EntityView {
             }
         }
 
-        $full_name_enabled = isset($mappings['mappings']['FirstName']) && isset($mappings['mappings']['LastName']);
-        $dob_enabled = isset($mappings['mappings']['BirthDate']);
+        if (!empty($not_linked)) {
+            $full_name_enabled = isset($mappings['mappings']['FirstName']) && isset($mappings['mappings']['LastName']);
+            $dob_enabled = isset($mappings['mappings']['BirthDate']);
 
-        foreach ($records as $subject_id => $record) {
-            $data = [
-                'subject_id' => (string) $subject_id,
-                'record_id' => (string) $record,
-                'type' => 'redcap_only',
-            ];
+            foreach ($not_linked as $record) {
+                $data = [
+                    'record_id' => (string) $record,
+                    'type' => 'redcap_only',
+                ];
 
-            $record_data = $records_data[$record][$mappings['event_id']];
-            if ($full_name_enabled) {
-                $data['subject_name'] = trim($record_data[$mappings['mappings']['FirstName']] . ' ' . $record_data[$mappings['mappings']['LastName']]);
+                $record_data = $records_data[$record][$mappings['event_id']];
+                if ($full_name_enabled) {
+                    $data['subject_name'] = trim($record_data[$mappings['mappings']['FirstName']] . ' ' . $record_data[$mappings['mappings']['LastName']]);
+                }
+
+                if ($dob_enabled) {
+                    $dob = $record_data[$mappings['mappings']['BirthDate']];
+                    $data['subject_dob'] = $dob ? strtotime($dob) : null;
+                }
+
+                $this->entityFactory->create('oncore_subject_diff', $data);
             }
-
-            if ($dob_enabled) {
-                $dob = $record_data[$mappings['mappings']['BirthDate']];
-                $data['subject_dob'] = $dob ? strtotime($dob) : null;
-            }
-
-            $this->entityFactory->create('oncore_subject_diff', $data);
         }
 
         REDCap::logEvent('OnCore-REDCap Diff rebuild', '', '', null, null, PROJECT_ID);
     }
 
-    protected function getLinkToRecordOptions() {
-        global $table_pk;
+    protected function getLinkToSubjectOptions() {
+        $entities = $this->entityFactory->query('oncore_subject_diff')
+            ->condition('type', 'oncore_only')
+            ->orderBy('subject_name')
+            ->execute();
 
-        $project_id = intval(PROJECT_ID);
-        $mappings = ExternalModule::$subjectMappings['mappings'];
-        $event_id = intval(ExternalModule::$subjectMappings['event_id']);
-
-        $sql_extra_fields = '';
-        $sql_extra_conds = '';
-        $sql_extra_joins = [];
-
-        $callback = '_formatRecordIdLinkOption';
-
-        if (isset($mappings['FirstName']) && isset($mappings['LastName'])) {
-            $callback = '_formatFullNameLinkOption';
-
-            $sql_extra_fields .= ', fn.value first_name, ln.value as last_name';
-            $sql_extra_joins += [
-                'fn' => $mappings['FirstName'],
-                'ln' => $mappings['LastName'],
-            ];
-        }
-
-        if ($table_pk != $mappings['PrimaryIdentifier']) {
-            $sql_extra_conds .= ' OR s.value = "" OR s.value IS NULL';
-            $sql_extra_joins['s'] = $mappings['PrimaryIdentifier'];
-        }
-
-        foreach ($sql_extra_joins as $alias => $col) {
-            $sql_extra_joins[$alias] = '
-                LEFT JOIN redcap_data ' . $alias . ' ON
-                    ' . $alias . '.record = r.record AND
-                    ' . $alias . '.project_id = ' . $project_id . ' AND
-                    ' . $alias . '.event_id = ' . $event_id . ' AND
-                    ' . $alias . '.field_name = "' . db_escape($col) . '" AND
-                    ' . $alias . '.instance IS NULL';
-        }
-
-        $sql = '
-            SELECT r.record record_id' . $sql_extra_fields . ' FROM redcap_data r
-            LEFT JOIN redcap_entity_oncore_subject_diff e ON
-                r.record = e.record_id AND
-                e.project_id = "' . $project_id . '"' . implode('', $sql_extra_joins) . '
-            WHERE
-                r.field_name = "' . db_escape($table_pk) . '" AND
-                r.project_id = ' . $project_id . ' AND
-                r.event_id = ' . $event_id . ' AND
-                r.instance IS NULL AND
-                (e.type = "redcap_only"' . $sql_extra_conds . ')
-            ORDER BY r.record';
-
-
-        if (!$q = $this->module->query($sql)) {
-            return false;
-        }
-
-        if (!db_num_rows($q)) {
+        if (empty($entities)) {
             return [];
         }
 
-        $records = [];
-        while ($result = db_fetch_assoc($q)) {
-            $records[$result['record_id']] = $this->{$callback}($result);
+        $subjects = [];
+
+        foreach ($entities as $entity_id => $entity) {
+            $data = $entity->getData();
+            $subjects[$entity_id] = '(' . $data['subject_id'] . ') ' . $data['subject_name'];
         }
 
-        return $records;
+        return $subjects;
     }
 
     protected function _formatRecordIdLinkOption($data) {

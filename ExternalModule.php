@@ -86,7 +86,6 @@ class ExternalModule extends AbstractExternalModule {
                 'subject_id' => [
                     'name' => 'OnCore subject ID',
                     'type' => 'text',
-                    'required' => true,
                 ],
                 'record_id' => [
                     'name' => 'REDCap record ID',
@@ -110,8 +109,8 @@ class ExternalModule extends AbstractExternalModule {
                     'type' => 'text',
                     'required' => true,
                     'choices' => [
-                        'oncore_only' => 'Incoming from OnCore',
-                        'redcap_only' => 'Doesn\'t exist on OnCore',
+                        'oncore_only' => 'New subject',
+                        'redcap_only' => 'Record not linked to subject',
                         'data_diff' => 'Needs update',
                     ],
                 ],
@@ -130,8 +129,8 @@ class ExternalModule extends AbstractExternalModule {
                     'label' => 'Pull OnCore Subjects',
                     'method' => 'pull',
                     'color' => 'green',
-                    'success_message' => 'The subjects have been created/updated successfully.',
-                    'confirmation_message' => 'Records can be created and/or overriden if you pull the selected items. This action cannot be undone.',
+                    'success_message' => 'The subjects have been pulled successfully.',
+                    'confirmation_message' => 'Records can be created and overriden if you pull the selected items. This action cannot be undone.',
                 ],
             ],
         ];
