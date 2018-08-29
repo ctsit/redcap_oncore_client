@@ -67,6 +67,33 @@
             ]
         },
         {
+            "key": "valid_statuses",
+            "name": "Pull subjects having the following statuses",
+            "type": "sub_settings",
+            "sub_settings": [
+                {
+                    "key": "off_study",
+                    "name": "Off study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "on_follow_up",
+                    "name": "On follow up",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "not_elegible",
+                    "name": "Off study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "expired",
+                    "name": "Expired",
+                    "type": "checkbox"
+                }
+            ]
+        },
+        {
             "key": "mappings_event",
             "name": "Event to map on",
             "type": "event-list",

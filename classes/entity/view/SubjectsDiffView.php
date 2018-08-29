@@ -14,20 +14,6 @@ class SubjectsDiffView extends EntityView {
 
     protected $linkToRecordEnabled = false;
 
-    protected function renderAddButton() {
-        echo RCView::p([], 'For performance reasons, ' . RCView::b([], 'OnCore data is cached') . ' on this system, so this list might not include the latest OnCore updates.');
-        echo RCView::p([], 'Make sure OnCore data is updated before taking any actions. To refresh cache, click on "Refresh OnCore data" button below.');
-
-        $btn = RCView::i(['class' => 'fas fa-sync-alt']);
-        $btn = RCView::button([
-            'type' => 'submit',
-            'name' => 'oncore_subjects_cache_clear',
-            'class' => 'btn btn-secondary btn-sm',
-        ], $btn . ' Refresh OnCore data');
-
-        echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 20px;'], $btn);
-    }
-
     protected function renderPageBody() {
         $this->module->setSubjectMappings();
 
@@ -60,10 +46,10 @@ class SubjectsDiffView extends EntityView {
         }
 
         $subjects = $this->getLinkToSubjectOptions();
-        include $this->module->getModulePath() . 'templates/link_modal.php';
-
         $this->linkToRecordEnabled = !empty($subjects);
-        $this->jsFiles[] = $this->module->getUrl('js/subjects_sync.js');
+
+        include $this->module->getModulePath() . 'templates/link_modal.php';
+        $this->jsFiles[] = $this->module->getUrl('js/subjects_pull.js');
 
         parent::renderPageBody();
 
@@ -71,9 +57,31 @@ class SubjectsDiffView extends EntityView {
         ExternalModules::addResource(ExternalModules::getManagerJSDirectory() . 'select2.js');
     }
 
+    protected function renderAddButton() {
+        echo RCView::p([], 'For performance reasons, ' . RCView::b([], 'OnCore data is cached') . ' on this system, so the list below might not include the latest OnCore updates.');
+        echo RCView::p([], 'Make sure OnCore data is updated before taking any actions. To refresh cache, click on "Refresh OnCore data" button below.');
+
+        $btn = RCView::i(['class' => 'fas fa-sync-alt']);
+        $btn = RCView::button([
+            'type' => 'submit',
+            'name' => 'oncore_subjects_cache_clear',
+            'class' => 'btn btn-secondary btn-sm',
+        ], $btn . ' Refresh OnCore data');
+
+        echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 20px;'], $btn);
+    }
+
+    protected function renderTable() {
+        parent::renderTable();
+
+        if ($this->rows) {
+            include $this->module->getModulePath() . 'templates/table_legend.php';
+        }
+    }
+
     protected function getTableHeaderLabels() {
         $header = parent::getTableHeaderLabels() + ['__operations' => 'Operations'];
-        unset($header['id'], $header['internal_subject_id'], $header['record_id'], $header['updated'], $header['created']);
+        unset($header['id'], $header['internal_subject_id'], $header['updated'], $header['created']);
 
         $mappings = ExternalModule::$subjectMappings['mappings'];
 
@@ -116,14 +124,11 @@ class SubjectsDiffView extends EntityView {
         }
 
         if ($type != 'oncore_only') {
-            $col = isset($row['record_id']) ? 'record_id' : 'subject_id';
-            $row['__operations'] .= RCView::a([
-                'class' => 'btn btn-info btn-xs',
-                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . htmlspecialchars(PROJECT_ID . '&id=' . $row[$col] . '&arm=' . getArm()),
-                'role' => 'button',
+            $row['record_id'] = RCView::a([
+                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . PROJECT_ID . '&id=' . $row['record_id'] . '&arm=' . getArm(),
                 'target' => '_blank',
-                'style' => 'color: #fff; font-size: 12px;',
-            ], 'Go to REDCap record');
+                'style' => 'color: #000066; font-weight: bold;',
+            ], $row['record_id']);
 
             $data = $entity->getData();
 
@@ -175,8 +180,8 @@ class SubjectsDiffView extends EntityView {
         return ['style' => 'background-color: #' . $colors[$entity->getType()] . ';'];
     }
 
-    protected function bulkOperationSubmit() {
-        parent::bulkOperationSubmit();
+    protected function executeBulkOperation($op, $op_info, $entities) {
+        parent::executeBulkOperation($op, $op_info, $entities);
         $this->rebuildSubjectsDiffList();
     }
 
@@ -189,8 +194,8 @@ class SubjectsDiffView extends EntityView {
                     "Update record",
                     "Delete record",
                     "Modify configuration for external module \"' . $this->module->PREFIX . '_' . $this->module->VERSION . '\" for project",
-                    "OnCore-REDCap Diff rebuild",
-                    "Erase all data"
+                    "Erase all data",
+                    "OnCore-REDCap Diff rebuild"
                 )
             ORDER BY log_event_id DESC LIMIT 1';
 
@@ -208,11 +213,16 @@ class SubjectsDiffView extends EntityView {
             return;
         }
 
-        $client = $this->module->getSoapClient();
-
         if (!$protocol_no = $this->module->getProjectSetting('protocol_no')) {
             return;
         }
+
+        $settings = $this->module->getFormattedSettings(PROJECT_ID);
+        if (!$statuses = array_filter($settings['valid_statuses'])) {
+            return;
+        }
+
+        $client = $this->module->getSoapClient();
 
         if (!$result = $client->request('getProtocolSubjects', array('ProtocolNo' => $protocol_no))) {
             return;
@@ -227,10 +237,14 @@ class SubjectsDiffView extends EntityView {
         }
 
         foreach ($result->ProtocolSubjects as $subject) {
+            if (!isset($statuses[str_replace(' ', '_', strtolower($subject->status))])) {
+                continue;
+            }
+
             $data = [
                 'subject_id' => $subject->Subject->PrimaryIdentifier,
                 'protocol_no' => $result->ProtocolNo,
-                'status' => $subject->Status,
+                'status' => $subject->status,
                 'data' => json_encode($subject->Subject),
             ];
 
@@ -238,7 +252,7 @@ class SubjectsDiffView extends EntityView {
         }
 
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
-        StatusMessageQueue::enqueue('The cache has been refreshed successfully.');
+        StatusMessageQueue::enqueue('The OnCore data cache has been refreshed successfully.');
     }
 
     protected function rebuildSubjectsDiffList() {
@@ -296,6 +310,7 @@ class SubjectsDiffView extends EntityView {
                 'subject_id' => (string) $subject_id,
                 'subject_name' => trim($data['data']->FirstName . ' ' . $data['data']->LastName),
                 'subject_dob' => strtotime($data['data']->BirthDate),
+                'status' => $data['status'],
                 'type' => 'oncore_only',
             ];
 
@@ -328,6 +343,7 @@ class SubjectsDiffView extends EntityView {
                         'record_id' => (string) $record,
                         'subject_name' => trim($subject_data['data']->FirstName . ' ' . $subject_data['data']->LastName),
                         'subject_dob' => $subject_data['data']->BirthDate ? strtotime($subject_data['data']->BirthDate) : null,
+                        'status' => $subject_data['status'],
                         'type' => 'data_diff',
                         'diff' => json_encode($diff),
                     ];
@@ -382,19 +398,5 @@ class SubjectsDiffView extends EntityView {
         }
 
         return $subjects;
-    }
-
-    protected function _formatRecordIdLinkOption($data) {
-        return $data['record_id'];
-    }
-
-    protected function _formatFullNameLinkOption($data) {
-        $formatted = '(' . $data['record_id'] . ') ';
-
-        if (empty($data['first_name']) || empty($data['last_name'])) {
-            return $formatted . '----';
-        }
-
-        return $formatted . $data['first_name'] . ' ' . $data['last_name'];
     }
 }

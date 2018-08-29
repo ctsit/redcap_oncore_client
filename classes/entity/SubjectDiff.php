@@ -16,6 +16,7 @@ class SubjectDiff extends Entity {
     protected $project_id;
     protected $subject_name;
     protected $subject_dob;
+    protected $status;
     protected $type;
     protected $diff;
 

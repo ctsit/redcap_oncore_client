@@ -79,16 +79,16 @@ class ExternalModule extends AbstractExternalModule {
             ],
             'properties' => [
                 'internal_subject_id' => [
-                    'name' => 'OnCore ID',
+                    'name' => 'Internal subject ID',
                     'type' => 'entity_reference',
                     'entity_type' => 'oncore_subject',
                 ],
                 'subject_id' => [
-                    'name' => 'OnCore subject ID',
+                    'name' => 'OnCore ID',
                     'type' => 'text',
                 ],
                 'record_id' => [
-                    'name' => 'REDCap record ID',
+                    'name' => 'REDCap Record ID',
                     'type' => 'text',
                 ],
                 'project_id' => [
@@ -110,9 +110,13 @@ class ExternalModule extends AbstractExternalModule {
                     'required' => true,
                     'choices' => [
                         'oncore_only' => 'New subject',
-                        'redcap_only' => 'Record not linked to subject',
+                        'redcap_only' => 'Record not linked',
                         'data_diff' => 'Needs update',
                     ],
+                ],
+                'status' => [
+                    'name' => 'OnCore Status',
+                    'type' => 'text',
                 ],
                 'diff' => [
                     'name' => 'Data',
@@ -218,7 +222,7 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         $config = $this->getConfig();
-        $config = $config['project-settings'][2]['sub_settings'];
+        $config = $config['project-settings'][3]['sub_settings'];
         $labels = [];
 
         foreach (array_merge($config, $config[11]['sub_settings']) as $config_field) {
