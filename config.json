@@ -1,0 +1,81 @@
+{
+    "name": "OnCore Client",
+    "namespace": "OnCoreClient\\ExternalModule",
+    "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
+    "permissions": [
+        "redcap_every_page_top",
+        "redcap_module_system_enable",
+        "redcap_module_system_disable",
+        "redcap_every_page_top"
+    ],
+    "authors": [
+        {
+            "name": "Philip Chase",
+            "email": "pbc@ufl.edu",
+            "institution": "University of Florida - CTSI"
+        },
+        {
+            "name": "Tiago Bember",
+            "email": "tbembersimeao@ufl.edu",
+            "institution": "University of Florida - CTSI"
+        }
+    ],
+    "system-settings": [
+        {
+            "key": "wsdl",
+            "name": "WSDL",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "login",
+            "name": "Login",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "password",
+            "name": "Password",
+            "required": true,
+            "type": "custom",
+            "source": "js/password.js",
+            "functionName": "OnCoreClient.passwordFieldHandler"
+        },
+        {
+            "key": "sip",
+            "name": "SIP URL",
+            "type": "text"
+        },
+        {
+            "key": "log_enabled",
+            "name": "Log requests",
+            "type": "checkbox"
+        }
+    ],
+    "project-settings": [
+        {
+            "key": "protocol_no",
+            "name": "Protocol",
+            "type": "dropdown",
+            "select2": true,
+            "choices": [
+                {
+                    "value": "",
+                    "name": "-- Select --"
+                }
+            ]
+        }
+    ],
+    "links": {
+        "control-center": [
+            {
+                "name": "OnCore API Logs",
+                "icon": "report",
+                "url": "plugins/logs.php"
+            }
+        ]
+    },
+    "compatibility": {
+        "redcap-version-min": "8.4.0"
+    }
+}

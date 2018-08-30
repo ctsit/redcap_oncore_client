@@ -1,0 +1,66 @@
+// getProtocol
+$input = array('protocolNo' => 'OCR20002');
+
+// getProtocolSubjects
+$input = array('ProtocolNo' => 'OCR20002');
+
+// createProtocol
+$input = array(
+    'ProtocolImportData' => array(
+        'ProtocolNo' => 'OCR20004',
+        'IrbNo' => '',
+        'Library' => 'Academic Health Center',
+        'Department' => 'MD-CTSI',
+        'OrganizationalUnit' => 'Academic Health Center',
+        'Title' => 'Send Rx',
+        'ShortTitle' => 'Send Rx',
+        'ProtocolType' => 'Other',
+        'EstimatedCompletionDate' => '2018-07-01',
+    ),
+);
+
+// registerNewSubjectToProtocol
+$input = array(
+    'ProtocolSubjectRegistrationData' => array(
+        'Context' => 'CRM',
+        'ProtocolSubject' => array(
+            'ProtocolNo' => 'OCR20002',
+            'StudySite' => 'UF Gainesville',
+            'status' => 'On Study',
+            'Subject' => array(
+                'PrimaryIdentifier' => 'E0599913',
+                'FirstName' => 'John',
+                'LastName' => 'Smith',
+                'Gender' => 'Male',
+                'BirthDate' => '1980-07-20',
+                'Ethnicity' => 'Non-Hispanic',
+                'Race' => 'Asian',
+                'ContactInfo' => array(
+                    'AddressLine' => '123 Main St.',
+                    'City' => 'Gainesville',
+                    'State' => 'FL',
+                    'County' => 'Alachua',
+                    'Country' => 'United States',
+                    'EmailAddress' => 'example@example.com',
+                ),
+                'ExpiredDate' => '2018-07-20',
+                'LastKnownAliveDate' => '2017-12-13',
+                'Comments' => 'No comments.',
+            ),
+            'ConsentData' => array(
+                'Type' => 'Informed Consent',
+                'Description' => 'Informed Consent',
+                'VersionDate' => '2017-07-20',
+                'ApprovedDate' => '2017-07-20',
+                'ExpirationDate' => '2018-07-20',
+                'SignedDate' => '2017-12-13',
+                'Status' => 'Consent Waived',
+            ),
+            'OnStudyData' => array(
+                'OnStudyDate' => '2017-12-01',
+                'StudySite' => 'UF Gainesville',
+                'ZipAtRegistration' => '32608',
+            ),
+        ),
+    ),
+);
