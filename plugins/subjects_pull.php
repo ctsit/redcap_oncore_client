@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__DIR__) . '/classes/entity/view/SubjectsDiffView.php';
+require_once dirname(__DIR__) . '/classes/entity/list/SubjectsDiffList.php';
 
-use OnCoreClient\Entity\View\SubjectsDiffView;
+use OnCoreClient\Entity\SubjectsDiffList;
 
-$view = new SubjectsDiffView('oncore_subject_diff', $module);
+$view = new SubjectsDiffList('oncore_subject_diff', $module);
 $view->render('project', 'Pull OnCore Subjects', 'arrow_rotate_clockwise');

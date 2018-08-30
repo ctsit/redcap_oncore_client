@@ -10,7 +10,6 @@ use Records;
 use REDCapEntity\Entity;
 
 class SubjectDiff extends Entity {
-    protected $internal_subject_id;
     protected $subject_id;
     protected $record_id;
     protected $project_id;
@@ -25,11 +24,15 @@ class SubjectDiff extends Entity {
     }
 
     function getSubject() {
-        if (empty($this->internal_subject_id)) {
+        if (empty($this->subject_id)) {
             return false;
         }
 
-        return $this->__factory->getInstance('oncore_subject', $this->internal_subject_id);
+        return $this->__factory->getInstance('oncore_subject', $this->subject_id);
+    }
+
+    function getStatuses() {
+        return ExternalModule::$subjectStatuses;
     }
 
     function pull($delete = false) {
@@ -77,6 +80,9 @@ class SubjectDiff extends Entity {
         global $Proj, $table_pk;
         $event_id = $mappings['event_id'];
 
+        $subject = $this->getSubject();
+        $subject_id = $subject->getLabel();
+
         if ($mappings['mappings']['PrimaryIdentifier'] == $table_pk) {
             $arm = $Proj->eventInfo[$event_id]['arm_num'];
 
@@ -84,11 +90,11 @@ class SubjectDiff extends Entity {
                 return false;
             }
 
-            changeRecordId($record, $this->subject_id);
-            $record = $this->subject_id;
+            changeRecordId($record, $subject_id);
+            $record = $subject_id;
         }
         else {
-            Records::saveData($this->project_id, 'array', [$record => [$event_id => [$mappings['mappings']['PrimaryIdentifier'] => $this->subject_id]]]);
+            Records::saveData($this->project_id, 'array', [$record => [$event_id => [$mappings['mappings']['PrimaryIdentifier'] => $subject_id]]]);
         }
 
         $subject = $this->getSubject();

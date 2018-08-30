@@ -3,6 +3,7 @@
 namespace OnCoreClient\Entity;
 
 use REDCapEntity\Entity;
+use OnCoreClient\ExternalModule\ExternalModule;
 
 class OnCoreSubject extends Entity {
     protected $subject_id;
@@ -10,4 +11,8 @@ class OnCoreSubject extends Entity {
     protected $protocol_no;
     protected $status;
     protected $data;
+
+    function getStatuses() {
+        return ExternalModule::$subjectStatuses;
+    }
 }

@@ -22,6 +22,7 @@ use REDCapEntity\EntityFactory;
 class ExternalModule extends AbstractExternalModule {
 
     static public $subjectMappings;
+    static public $subjectStatuses;
 
     /**
      * @inheritdoc.
@@ -39,12 +40,12 @@ class ExternalModule extends AbstractExternalModule {
         EntityDB::buildSchema($this);
 
         // Creates logs table.
-        $sql .= '
+        $sql = '
             CREATE TABLE IF NOT EXISTS `redcap_oncore_client_log` (
                 id INT NOT NULL AUTO_INCREMENT,
                 pid INT NOT NULL,
-                operation VARCHAR NOT NULL,
-                success BOOL NOT NULL,
+                operation VARCHAR(255) NOT NULL,
+                success TINYINT NOT NULL,
                 timestamp INT NOT NULL,
                 request TEXT,
                 response TEXT,
@@ -67,8 +68,8 @@ class ExternalModule extends AbstractExternalModule {
         $types = [];
 
         $types['oncore_subject_diff'] = [
-            'label' => 'OnCore-REDCap Subject Diff',
-            'label_plural' => 'OnCore-REDCap Subject Diffs',
+            'label' => 'OnCore Subject Diff',
+            'label_plural' => 'OnCore Subject Diffs',
             'special_keys' => [
                 'project' => 'project_id',
                 'label' => 'subject_name',
@@ -78,17 +79,13 @@ class ExternalModule extends AbstractExternalModule {
                 'path' => 'classes/entity/SubjectDiff.php',
             ],
             'properties' => [
-                'internal_subject_id' => [
-                    'name' => 'Internal subject ID',
+                'subject_id' => [
+                    'name' => 'OnCore Subject',
                     'type' => 'entity_reference',
                     'entity_type' => 'oncore_subject',
                 ],
-                'subject_id' => [
-                    'name' => 'OnCore ID',
-                    'type' => 'text',
-                ],
                 'record_id' => [
-                    'name' => 'REDCap Record ID',
+                    'name' => 'REDCap Record',
                     'type' => 'text',
                 ],
                 'project_id' => [
@@ -117,24 +114,22 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
+                    'choices_callback' => 'getStatuses',
                 ],
                 'diff' => [
                     'name' => 'Data',
                     'type' => 'json',
                 ],
             ],
-            'operations' => [
-                'create' => false,
-                'update' => false,
-                'delete' => false,
-            ],
             'bulk_operations' => [
                 'pull' => [
                     'label' => 'Pull OnCore Subjects',
                     'method' => 'pull',
                     'color' => 'green',
-                    'success_message' => 'The subjects have been pulled successfully.',
-                    'confirmation_message' => 'Records can be created and overriden if you pull the selected items. This action cannot be undone.',
+                    'messages' => [
+                        'success' => 'The subjects have been pulled successfully.',
+                        'confirmation' => 'This operation can override records.',
+                    ],
                 ],
             ],
         ];
@@ -143,6 +138,7 @@ class ExternalModule extends AbstractExternalModule {
             'label' => 'OnCore Subject',
             'label_plural' => 'OnCore Subjects',
             'special_keys' => [
+                'label' => 'subject_id',
                 'project' => 'project_id',
             ],
             'class' => [
@@ -168,6 +164,7 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
+                    'choices_callback' => 'getStatuses',
                 ],
                 'data' => [
                     'name' => 'Data',
@@ -191,10 +188,14 @@ class ExternalModule extends AbstractExternalModule {
         return new OnCoreClient($wsdl, $login, $password, $log_enabled);
     }
 
-    function setSubjectMappings() {
+    function initSubjectsMetadata() {
         global $Proj;
 
         $settings = $this->getFormattedSettings($Proj->project_id);
+        if (!$statuses = array_filter($settings['valid_statuses'])) {
+            return;
+        }
+
         $event_id = $settings['mappings_event'];
 
         if (!$event_id || !isset($Proj->eventInfo[$event_id])) {
@@ -222,6 +223,22 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         $config = $this->getConfig();
+
+        foreach ($config['project-settings'][1]['sub_settings'] as $config_field) {
+            if (isset($statuses[$config_field['key']])) {
+                $statuses[$config_field['key']] = $config_field['name'];
+            }
+        }
+
+        if (isset($statuses['_expired'])) {
+            // Workaround for a bug on EM that does not allow fields keyed as
+            // "expired" to exist.
+            $statuses['expired'] = $statuses['_expired'];
+            unset($statuses['_expired']);
+        }
+
+        self::$subjectStatuses = $statuses;
+
         $config = $config['project-settings'][3]['sub_settings'];
         $labels = [];
 

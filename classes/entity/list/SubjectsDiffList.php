@@ -1,21 +1,20 @@
 <?php
 
-namespace OnCoreClient\Entity\View;
+namespace OnCoreClient\Entity;
 
-use ExternalModules\ExternalModules;
 use OnCoreClient\ExternalModule\ExternalModule;
 use RCView;
 use Records;
 use REDCap;
-use REDCapEntity\EntityView;
+use REDCapEntity\EntityList;
 use REDCapEntity\StatusMessageQueue;
 
-class SubjectsDiffView extends EntityView {
+class SubjectsDiffList extends EntityList {
 
     protected $linkToRecordEnabled = false;
 
     protected function renderPageBody() {
-        $this->module->setSubjectMappings();
+        $this->module->initSubjectsMetadata();
 
         if (empty(ExternalModule::$subjectMappings)) {
             // TODO.
@@ -52,9 +51,6 @@ class SubjectsDiffView extends EntityView {
         $this->jsFiles[] = $this->module->getUrl('js/subjects_pull.js');
 
         parent::renderPageBody();
-
-        ExternalModules::addResource(ExternalModules::getManagerCSSDirectory() . 'select2.css');
-        ExternalModules::addResource(ExternalModules::getManagerJSDirectory() . 'select2.js');
     }
 
     protected function renderAddButton() {
@@ -68,7 +64,7 @@ class SubjectsDiffView extends EntityView {
             'class' => 'btn btn-secondary btn-sm',
         ], $btn . ' Refresh OnCore data');
 
-        echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 20px;'], $btn);
+        echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 30px;'], $btn);
     }
 
     protected function renderTable() {
@@ -81,7 +77,7 @@ class SubjectsDiffView extends EntityView {
 
     protected function getTableHeaderLabels() {
         $header = parent::getTableHeaderLabels() + ['__operations' => 'Operations'];
-        unset($header['id'], $header['internal_subject_id'], $header['updated'], $header['created']);
+        unset($header['id'], $header['updated'], $header['created']);
 
         $mappings = ExternalModule::$subjectMappings['mappings'];
 
@@ -217,11 +213,6 @@ class SubjectsDiffView extends EntityView {
             return;
         }
 
-        $settings = $this->module->getFormattedSettings(PROJECT_ID);
-        if (!$statuses = array_filter($settings['valid_statuses'])) {
-            return;
-        }
-
         $client = $this->module->getSoapClient();
 
         if (!$result = $client->request('getProtocolSubjects', array('ProtocolNo' => $protocol_no))) {
@@ -237,14 +228,16 @@ class SubjectsDiffView extends EntityView {
         }
 
         foreach ($result->ProtocolSubjects as $subject) {
-            if (!isset($statuses[str_replace(' ', '_', strtolower($subject->status))])) {
+            $status = str_replace(' ', '_', strtolower($subject->status));
+
+            if (!isset(ExternalModule::$subjectStatuses[$status])) {
                 continue;
             }
 
             $data = [
                 'subject_id' => $subject->Subject->PrimaryIdentifier,
                 'protocol_no' => $result->ProtocolNo,
-                'status' => $subject->status,
+                'status' => $status,
                 'data' => json_encode($subject->Subject),
             ];
 
@@ -293,7 +286,7 @@ class SubjectsDiffView extends EntityView {
 
         $linked = [];
 
-        foreach ($subjects as $subject) {
+        foreach ($subjects as $id => $subject) {
             $data = $subject->getData();
             $subject_id = $data['subject_id'];
 
@@ -306,8 +299,7 @@ class SubjectsDiffView extends EntityView {
             }
 
             $data = [
-                'internal_subject_id' => $data['id'],
-                'subject_id' => (string) $subject_id,
+                'subject_id' => $data['id'],
                 'subject_name' => trim($data['data']->FirstName . ' ' . $data['data']->LastName),
                 'subject_dob' => strtotime($data['data']->BirthDate),
                 'status' => $data['status'],
@@ -338,8 +330,7 @@ class SubjectsDiffView extends EntityView {
 
                 if (!empty($diff)) {
                     $data = [
-                        'internal_subject_id' => $subject_data['id'],
-                        'subject_id' => (string) $subject_data['subject_id'],
+                        'subject_id' => $subject_data['id'],
                         'record_id' => (string) $record,
                         'subject_name' => trim($subject_data['data']->FirstName . ' ' . $subject_data['data']->LastName),
                         'subject_dob' => $subject_data['data']->BirthDate ? strtotime($subject_data['data']->BirthDate) : null,
@@ -393,8 +384,8 @@ class SubjectsDiffView extends EntityView {
         $subjects = [];
 
         foreach ($entities as $entity_id => $entity) {
-            $data = $entity->getData();
-            $subjects[$entity_id] = '(' . $data['subject_id'] . ') ' . $data['subject_name'];
+            $subject = $entity->getSubject();
+            $subjects[$entity_id] = '(' . $subject->getLabel() . ') ' . $entity->getLabel();
         }
 
         return $subjects;
