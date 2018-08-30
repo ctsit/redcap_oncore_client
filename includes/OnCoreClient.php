@@ -17,14 +17,16 @@ require_once dirname(__FILE__) . '/OnCoreSoapClient.php';
 class OnCoreClient {
     protected $client;
     protected $handlers = array();
+    protected $logEnabled;
 
     /**
      * Constructor.
      */
-    function __construct($wsdl, $login, $password) {
+    function __construct($wsdl, $login, $password, $log_enabled = false) {
         $this->includeHandlers();
         $this->setClient($wsdl, $login, $password);
         $this->setHandlers();
+        $this->logEnabled = $log_enabled;
     }
 
     /**
@@ -125,6 +127,10 @@ class OnCoreClient {
      * Logs API call.
      */
     function log($log) {
+        if (!$this->logEnabled) {
+            return;
+        }
+
         foreach ($log as $key => $value) {
             if (is_string($value)) {
                 $log[$key] = '"' . db_escape($value) . '"';
