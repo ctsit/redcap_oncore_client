@@ -48,7 +48,9 @@ class SubjectsDiffList extends EntityList {
         $this->linkToRecordEnabled = !empty($subjects);
 
         include $this->module->getModulePath() . 'templates/link_modal.php';
+
         $this->jsFiles[] = $this->module->getUrl('js/subjects_pull.js');
+        $this->cssFiles[] = $this->module->getUrl('css/subjects_pull.css');
 
         parent::renderPageBody();
     }
@@ -64,7 +66,7 @@ class SubjectsDiffList extends EntityList {
             'class' => 'btn btn-secondary btn-sm',
         ], $btn . ' Refresh OnCore data');
 
-        echo RCView::form(['method' => 'post', 'style' => 'margin-bottom: 30px;'], $btn);
+        echo RCView::form(['id' => 'oncore-cache-clear', 'method' => 'post'], $btn);
     }
 
     protected function renderTable() {
@@ -123,7 +125,6 @@ class SubjectsDiffList extends EntityList {
             $row['record_id'] = RCView::a([
                 'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . PROJECT_ID . '&id=' . $row['record_id'] . '&arm=' . getArm(),
                 'target' => '_blank',
-                'style' => 'color: #000066; font-weight: bold;',
             ], $row['record_id']);
 
             $data = $entity->getData();
@@ -166,14 +167,15 @@ class SubjectsDiffList extends EntityList {
         return $row;
     }
 
-    protected function getRowAttributes($entity) {
-        $colors = [
-            'oncore_only' => 'fff3cd',
-            'redcap_only' => 'cce5ff',
-            'data_diff' => 'd4edda',
-        ];
+    protected function getExposedFilters() {
+        $filters = parent::getExposedFilters();
+        unset($filters['subject_dob']);
 
-        return ['style' => 'background-color: #' . $colors[$entity->getType()] . ';'];
+        return $filters;
+    }
+
+    protected function getRowAttributes($entity) {
+        return ['class' => 'row-' . str_replace('_', '-', $entity->getType())];
     }
 
     protected function executeBulkOperation($op, $op_info, $entities) {
