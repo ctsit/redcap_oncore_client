@@ -15,6 +15,7 @@ use RCView;
 use REDCap;
 use REDCapEntity\EntityDB;
 use REDCapEntity\EntityFactory;
+use REDCapEntity\StatusMessageQueue;
 
 /**
  * ExternalModule class for OnCore Client.
@@ -38,22 +39,6 @@ class ExternalModule extends AbstractExternalModule {
      */
     function redcap_module_system_enable($version) {
         EntityDB::buildSchema($this);
-
-        // Creates logs table.
-        $sql = '
-            CREATE TABLE IF NOT EXISTS `redcap_oncore_client_log` (
-                id INT NOT NULL AUTO_INCREMENT,
-                pid INT NOT NULL,
-                operation VARCHAR(255) NOT NULL,
-                success TINYINT NOT NULL,
-                timestamp INT NOT NULL,
-                request TEXT,
-                response TEXT,
-                error_msg VARCHAR(512),
-                PRIMARY KEY (id)
-            )  COLLATE utf8_unicode_ci';
-
-        $this->query($sql);
     }
 
     /**
@@ -61,7 +46,6 @@ class ExternalModule extends AbstractExternalModule {
      */
     function redcap_module_system_disable($version) {
         EntityDB::dropSchema($this);
-        $this->query('DROP TABLE IF EXISTS redcap_oncore_client_log');
     }
 
     function redcap_entity_types() {
@@ -170,7 +154,70 @@ class ExternalModule extends AbstractExternalModule {
                     'name' => 'Data',
                     'type' => 'json',
                 ],
-            ]
+            ],
+        ];
+
+        $types['oncore_api_log'] = [
+            'label' => 'OnCore API Log',
+            'label_plural' => 'OnCore API Logs',
+            'class' => [
+                'name' => 'OnCoreClient\Entity\APILog',
+                'path' => 'classes/entity/APILog.php',
+            ],
+            'properties' => [
+                'success' => [
+                    'name' => 'Success',
+                    'type' => 'boolean',
+                ],
+                'operation' => [
+                    'name' => 'Operation',
+                    'type' => 'text',
+                    'choices' => [
+                        'getProtocol' => 'getProtocol',
+                        'getProtocolSubjects' => 'getProtocolSubjects',
+                        'createProtocol' => 'createProtocol',
+                        'registerNewSubjectToProtocol' => 'registerNewSubjectToProtocol',
+                        'registerExistingSubjectToProtocol' => 'registerExistingSubjectToProtocol',
+                    ],
+                ],
+                'user_id' => [
+                    'name' => 'User',
+                    'type' => 'user',
+                    'required' => true,
+                ],
+                'project_id' => [
+                    'name' => 'Project ID',
+                    'type' => 'project',
+                    'required' => true,
+                ],
+                'request' => [
+                    'name' => 'Request',
+                    'type' => 'long_text',
+                ],
+                'response' => [
+                    'name' => 'Response',
+                    'type' => 'long_text',
+                ],
+                'error_msg' => [
+                    'name' => 'Error message',
+                    'type' => 'text',
+                ],
+            ],
+            'special_keys' => [
+                'project' => 'project_id',
+                'author' => 'user_id',
+            ],
+            'operations' => ['delete'],
+            'bulk_operations' => [
+                'delete' => [
+                    'label' => 'Delete',
+                    'method' => 'delete',
+                    'color' => 'red',
+                    'messages' => [
+                        'success' => 'The logs have been deleted successfully.',
+                    ],
+                ],
+            ],
         ];
 
         return $types;
@@ -286,6 +333,177 @@ class ExternalModule extends AbstractExternalModule {
 
         $this->includeJs('js/config.js');
         $this->setJsSettings($settings);
+    }
+
+    function clearOnCoreSubjectsCache() {
+        if (!$mappings = ExternalModule::$subjectMappings) {
+            return;
+        }
+
+        if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $client = $this->getSoapClient();
+
+        if (!$result = $client->request('getProtocolSubjects', array('ProtocolNo' => $protocol_no))) {
+            return;
+        }
+
+        if (empty($result->ProtocolSubjects)) {
+            return;
+        }
+
+        if (!$this->query('DELETE FROM redcap_entity_oncore_subject WHERE project_id = ' . intval(PROJECT_ID))) {
+            return;
+        }
+
+        foreach ($result->ProtocolSubjects as $subject) {
+            $status = str_replace(' ', '_', strtolower($subject->status));
+
+            if (!isset(ExternalModule::$subjectStatuses[$status])) {
+                continue;
+            }
+
+            $data = [
+                'subject_id' => $subject->Subject->PrimaryIdentifier,
+                'protocol_no' => $result->ProtocolNo,
+                'status' => $status,
+                'data' => json_encode($subject->Subject),
+            ];
+
+            $factory = new EntityFactory();
+            $factory->create('oncore_subject', $data);
+        }
+
+        $this->rebuildSubjectsDiffList();
+
+        REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
+        StatusMessageQueue::enqueue('The OnCore data cache has been refreshed successfully.');
+    }
+
+    function rebuildSubjectsDiffList() {
+        if (!$mappings = ExternalModule::$subjectMappings) {
+            return;
+        }
+
+        if (!$this->query('DELETE FROM redcap_entity_oncore_subject_diff WHERE project_id = ' . intval(PROJECT_ID))) {
+            return;
+        }
+
+        global $table_pk;
+
+        $subject_id_field = $mappings['mappings']['PrimaryIdentifier'];
+        $records_data = REDCap::getData(PROJECT_ID, 'array', null, $subject_id_field, $mappings['event_id']);
+
+        $not_linked = array_keys($records_data);
+        $not_linked = array_combine($not_linked, $not_linked);
+
+        if ($subject_id_field == $table_pk) {
+            $records = $not_linked;
+        }
+        else {
+            $records = [];
+
+            foreach ($records_data as $record => $data) {
+                $data = $data[$mappings['event_id']];
+
+                if (!empty($data[$subject_id_field])) {
+                    $records[$data[$subject_id_field]] = $record;
+                }
+            }
+        }
+
+        $factory = new EntityFactory();
+        if (!$subjects = $factory->query('oncore_subject')->execute()) {
+            return;
+        }
+
+        $linked = [];
+
+        foreach ($subjects as $id => $subject) {
+            $data = $subject->getData();
+            $subject_id = $data['subject_id'];
+
+            if (isset($records[$subject_id])) {
+                $record = $records[$subject_id];
+                $linked[$record] = $data;
+
+                unset($not_linked[$record]);
+                continue;
+            }
+
+            $data = [
+                'subject_id' => $data['id'],
+                'subject_name' => trim($data['data']->FirstName . ' ' . $data['data']->LastName),
+                'subject_dob' => strtotime($data['data']->BirthDate),
+                'status' => $data['status'],
+                'type' => 'oncore_only',
+            ];
+
+            $factory->create('oncore_subject_diff', $data);
+        }
+
+        if (!empty($linked)) {
+            $records_data = REDCap::getData(PROJECT_ID, 'array', array_keys($linked), $mappings['mappings'], $mappings['event_id']);
+
+            foreach ($records_data as $record => $data) {
+                $subject_data = $linked[$record];
+                $data = $data[$mappings['event_id']];
+                $diff = [];
+
+                foreach ($mappings['mappings'] as $key => $field) {
+                    $value = $subject_data['data']->{$key};
+                    if ($value === null) {
+                        $value = '';
+                    }
+
+                    if ($value !== $data[$field]) {
+                        $diff[$key] = [$data[$field], $value];
+                    }
+                }
+
+                if (!empty($diff)) {
+                    $data = [
+                        'subject_id' => $subject_data['id'],
+                        'record_id' => (string) $record,
+                        'subject_name' => trim($subject_data['data']->FirstName . ' ' . $subject_data['data']->LastName),
+                        'subject_dob' => $subject_data['data']->BirthDate ? strtotime($subject_data['data']->BirthDate) : null,
+                        'status' => $subject_data['status'],
+                        'type' => 'data_diff',
+                        'diff' => json_encode($diff),
+                    ];
+
+                    $factory->create('oncore_subject_diff', $data);
+                }
+            }
+        }
+
+        if (!empty($not_linked)) {
+            $full_name_enabled = isset($mappings['mappings']['FirstName']) && isset($mappings['mappings']['LastName']);
+            $dob_enabled = isset($mappings['mappings']['BirthDate']);
+
+            foreach ($not_linked as $record) {
+                $data = [
+                    'record_id' => (string) $record,
+                    'type' => 'redcap_only',
+                ];
+
+                $record_data = $records_data[$record][$mappings['event_id']];
+                if ($full_name_enabled) {
+                    $data['subject_name'] = trim($record_data[$mappings['mappings']['FirstName']] . ' ' . $record_data[$mappings['mappings']['LastName']]);
+                }
+
+                if ($dob_enabled) {
+                    $dob = $record_data[$mappings['mappings']['BirthDate']];
+                    $data['subject_dob'] = $dob ? strtotime($dob) : null;
+                }
+
+                $factory->create('oncore_subject_diff', $data);
+            }
+        }
+
+        REDCap::logEvent('OnCore Subjects Diff rebuild', '', '', null, null, PROJECT_ID);
     }
 
     /**

@@ -216,7 +216,7 @@
             {
                 "name": "OnCore API Logs",
                 "icon": "report",
-                "url": "plugins/logs.php"
+                "url": "plugins/api_logs.php"
             }
         ],
         "project": [
