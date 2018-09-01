@@ -34,20 +34,6 @@ class ExternalModule extends AbstractExternalModule {
         }
     }
 
-    /**
-     * @inheritdoc.
-     */
-    function redcap_module_system_enable($version) {
-        EntityDB::buildSchema($this);
-    }
-
-    /**
-     * @inheritdoc.
-     */
-    function redcap_module_system_disable($version) {
-        EntityDB::dropSchema($this);
-    }
-
     function redcap_entity_types() {
         $types = [];
 
@@ -70,7 +56,7 @@ class ExternalModule extends AbstractExternalModule {
                 ],
                 'record_id' => [
                     'name' => 'REDCap Record',
-                    'type' => 'text',
+                    'type' => 'record',
                 ],
                 'project_id' => [
                     'name' => 'Project ID',
@@ -186,7 +172,7 @@ class ExternalModule extends AbstractExternalModule {
                     'required' => true,
                 ],
                 'project_id' => [
-                    'name' => 'Project ID',
+                    'name' => 'Project',
                     'type' => 'project',
                     'required' => true,
                 ],

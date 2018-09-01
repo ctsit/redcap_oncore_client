@@ -22,7 +22,7 @@ class SubjectsDiffList extends EntityList {
         }
 
         if (!$this->isListUpdated()) {
-            $this->rebuildSubjectsDiffList();
+            $this->module->rebuildSubjectsDiffList();
         }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -122,11 +122,6 @@ class SubjectsDiffList extends EntityList {
         }
 
         if ($type != 'oncore_only') {
-            $row['record_id'] = RCView::a([
-                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . PROJECT_ID . '&id=' . $row['record_id'] . '&arm=' . getArm(),
-                'target' => '_blank',
-            ], $row['record_id']);
-
             $data = $entity->getData();
 
             if ($type == 'data_diff') {
@@ -184,6 +179,7 @@ class SubjectsDiffList extends EntityList {
     }
 
     protected function isListUpdated() {
+        $module_name = db_escape($this->module->PREFIX . '_' . $this->module->VERSION);
         $sql = '
             SELECT description FROM redcap_log_event
             WHERE
@@ -191,7 +187,7 @@ class SubjectsDiffList extends EntityList {
                     "Create record",
                     "Update record",
                     "Delete record",
-                    "Modify configuration for external module \"' . $this->module->PREFIX . '_' . $this->module->VERSION . '\" for project",
+                    "Modify configuration for external module \"' . $module_name  . '\" for project",
                     "Erase all data",
                     "OnCore-REDCap Diff rebuild"
                 )
