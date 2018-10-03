@@ -3,9 +3,6 @@
     "namespace": "OnCoreClient\\ExternalModule",
     "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
     "permissions": [
-        "redcap_every_page_top",
-        "redcap_module_system_enable",
-        "redcap_module_system_disable",
         "redcap_every_page_top"
     ],
     "authors": [
@@ -58,10 +55,155 @@
             "name": "Protocol",
             "type": "dropdown",
             "select2": true,
+            "required": true,
             "choices": [
                 {
                     "value": "",
                     "name": "-- Select --"
+                }
+            ]
+        },
+        {
+            "key": "valid_statuses",
+            "name": "Pull subjects having the following statuses",
+            "type": "sub_settings",
+            "sub_settings": [
+                {
+                    "key": "off_study",
+                    "name": "Off study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "on_follow_up",
+                    "name": "On follow up",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "not_eligible",
+                    "name": "Not eligible",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "_expired",
+                    "name": "Expired",
+                    "type": "checkbox"
+                }
+            ]
+        },
+        {
+            "key": "mappings_event",
+            "name": "Event to map on",
+            "type": "event-list",
+            "required": true
+        },
+        {
+            "key": "mappings",
+            "name": "Subject Mappings (OnCore -> REDCap fields)",
+            "type": "sub_settings",
+            "sub_settings": [
+                {
+                    "key": "PrimaryIdentifier",
+                    "name": "OnCore Primary identifier",
+                    "type": "field-list",
+                    "required": true
+                },
+                {
+                    "key": "FirstName",
+                    "name": "First name",
+                    "type": "field-list"
+                },
+                {
+                    "key": "MiddleName",
+                    "name": "Middle name",
+                    "type": "field-list"
+                },
+                {
+                    "key": "LastName",
+                    "name": "Last name",
+                    "type": "field-list"
+                },
+                {
+                    "key": "Suffix",
+                    "name": "Suffix",
+                    "type": "field-list"
+                },
+                {
+                    "key": "SSN",
+                    "name": "SSN",
+                    "type": "field-list"
+                },
+                {
+                    "key": "Gender",
+                    "name": "Gender",
+                    "type": "field-list"
+                },
+                {
+                    "key": "BirthDate",
+                    "name": "DOB",
+                    "type": "field-list"
+                },
+                {
+                    "key": "Ethnicity",
+                    "name": "Ethnicity",
+                    "type": "field-list"
+                },
+                {
+                    "key": "Race",
+                    "name": "Race",
+                    "type": "field-list"
+                },
+                {
+                    "key": "Comments",
+                    "name": "Comments",
+                    "type": "field-list"
+                },
+                {
+                    "key": "ContactInfo",
+                    "name": "Contact info",
+                    "type": "sub_settings",
+                    "sub_settings": [
+                        {
+                            "key": "AddressLine",
+                            "name": "Address line",
+                            "repeatable": true,
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "City",
+                            "name": "City",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "State",
+                            "name": "State",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "Zip",
+                            "name": "Zip code",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "County",
+                            "name": "City",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "PhoneNumber",
+                            "name": "Phone number",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "AlternatePhoneNumber",
+                            "name": "Alternate phone number",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "EmailAddress",
+                            "name": "Email",
+                            "type": "field-list"
+                        }
+                    ]
                 }
             ]
         }
@@ -71,11 +213,15 @@
             {
                 "name": "OnCore API Logs",
                 "icon": "report",
-                "url": "plugins/logs.php"
+                "url": "plugins/api_logs.php"
+            }
+        ],
+        "project": [
+            {
+                "name": "Pull OnCore Subjects",
+                "icon": "arrow_rotate_clockwise",
+                "url": "plugins/subjects_pull.php"
             }
         ]
-    },
-    "compatibility": {
-        "redcap-version-min": "8.4.0"
     }
 }
