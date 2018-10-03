@@ -4,7 +4,7 @@ This is a REDCap external module that provides integration with OnCore.
 It allows REDCap project builders to associate a REDCap project with an OnCore protocol. It also allows developers to call the OnCore API via SOAP.
 
 ## Prerequisites
-- REDCap >= 8.4.0
+- REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 
 ## Installation
@@ -33,7 +33,7 @@ To do that, access **External Modules** section of your project, make sure OnCor
 
 ## Sync OnCore subjects
 
-TODO.
+TODO : write this section
 
 
 ## Using the API
