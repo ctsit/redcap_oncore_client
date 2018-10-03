@@ -6,6 +6,7 @@ It allows REDCap project builders to associate a REDCap project with an OnCore p
 ## Prerequisites
 - REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
+- [redcap_entity module >= 1.0.0](https://github.com/ctsit/redcap_entity)
 
 ## Installation
 - Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v<version_number>`.
