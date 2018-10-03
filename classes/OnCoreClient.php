@@ -7,6 +7,7 @@
 namespace OnCoreClient;
 
 use OncoreClient\OnCoreSoapClient;
+use REDCapEntity\EntityFactory;
 use SoapFault;
 
 require_once dirname(__FILE__) . '/OnCoreSoapClient.php';
@@ -81,15 +82,10 @@ class OnCoreClient {
             return false;
         }
 
-        $log = array(
-            'pid' => (int) PROJECT_ID,
+        $log = [
             'operation' => $op,
-            'timestamp' => time(),
             'success' => 1,
-            'request' => '',
-            'response' => '',
-            'error_msg' => '',
-        );
+        ];
 
         if (!$class = $this->getOperationHandlerClass($op)) {
             $log['error_msg'] = 'Operation does not exist or not supported.';
@@ -131,14 +127,8 @@ class OnCoreClient {
             return;
         }
 
-        foreach ($log as $key => $value) {
-            if (is_string($value)) {
-                $log[$key] = '"' . db_escape($value) . '"';
-            }
-        }
-
-        $sql = 'INSERT INTO redcap_oncore_client_log (' . implode(', ', array_keys($log)) . ') VALUES (' . implode(', ', $log) . ')';
-        db_query($sql);
+        $factory = new EntityFactory();
+        $factory->create('oncore_api_log', $log);
     }
 
     /**

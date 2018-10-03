@@ -1,0 +1,20 @@
+#oncore-cache-clear {
+    margin-bottom: 30px;
+}
+
+#recap-entity-list a {
+    color: #000066;
+    font-weight: bold;
+}
+
+#redcap-entity-list .row-oncore-only {
+    background-color: #fff3cd;
+}
+
+#redcap-entity-list .row-redcap-only {
+    background-color: #cce5ff;
+}
+
+#redcap-entity-list .row-data-diff {
+    background-color: #d4edda;
+}
