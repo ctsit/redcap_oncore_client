@@ -7,16 +7,19 @@
     ],
     "authors": [
         {
-            "name": "Philip Chase",
-            "email": "pbc@ufl.edu",
-            "institution": "University of Florida - CTSI"
-        },
-        {
             "name": "Tiago Bember",
             "email": "tbembersimeao@ufl.edu",
             "institution": "University of Florida - CTSI"
+        },
+        {
+            "name": "Philip Chase",
+            "email": "pbc@ufl.edu",
+            "institution": "University of Florida - CTSI"
         }
     ],
+    "compatibility": {
+        "redcap-version-min": "8.7.0"
+    },
     "system-settings": [
         {
             "key": "wsdl",
