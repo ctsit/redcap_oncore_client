@@ -174,7 +174,7 @@ class SubjectsDiffList extends EntityList {
         return $filters;
     }
 
-    protected function getRowAttributes($entity) {
+    protected function getRowAttributes($data, $entity) {
         return ['class' => 'row-' . str_replace('_', '-', $entity->getType())];
     }
 
