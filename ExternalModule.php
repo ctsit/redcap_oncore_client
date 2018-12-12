@@ -178,7 +178,7 @@ class ExternalModule extends AbstractExternalModule {
                     'required' => true,
                 ],
                 'project_id' => [
-                    'name' => 'Project',
+                    'name' => 'Project ID',
                     'type' => 'project',
                     'required' => true,
                 ],
