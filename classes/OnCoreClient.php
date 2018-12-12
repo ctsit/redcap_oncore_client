@@ -10,7 +10,7 @@ use OncoreClient\OnCoreSoapClient;
 use REDCapEntity\EntityFactory;
 use SoapFault;
 
-require_once dirname(__FILE__) . '/OnCoreSoapClient.php';
+require_once 'OnCoreSoapClient.php';
 
 /**
  * OnCore client class.
@@ -34,7 +34,7 @@ class OnCoreClient {
      * Includes handlers files.
      */
     function includeHandlers() {
-        foreach (glob(dirname(__FILE__) . '/handlers/*.php') as $filename) {
+        foreach (glob(__DIR__ . '/handlers/*.php') as $filename) {
             include_once $filename;
         }
     }

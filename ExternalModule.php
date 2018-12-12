@@ -34,6 +34,20 @@ class ExternalModule extends AbstractExternalModule {
         }
     }
 
+    /**
+     * @inheritdoc.
+     */
+    function redcap_module_system_enable($version) {
+        EntityDB::buildSchema($this->PREFIX);
+    }
+
+    /**
+     * @inheritdoc.
+     */
+    function redcap_module_system_disable($version) {
+        EntityDB::dropSchema($this->PREFIX);
+    }
+
     function redcap_entity_types() {
         $types = [];
 
@@ -84,7 +98,7 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
-                    'choices_callback' => 'getStatuses',
+                    'choices_callback' => '\OnCoreClient\Entity\SubjectDiff::getStatuses',
                 ],
                 'diff' => [
                     'name' => 'Data',
@@ -111,10 +125,6 @@ class ExternalModule extends AbstractExternalModule {
                 'label' => 'subject_id',
                 'project' => 'project_id',
             ],
-            'class' => [
-                'name' => 'OnCoreClient\Entity\OnCoreSubject',
-                'path' => 'classes/entity/OnCoreSubject.php',
-            ],
             'properties' => [
                 'subject_id' => [
                     'name' => 'OnCore Primary Identifier',
@@ -134,7 +144,7 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
-                    'choices_callback' => 'getStatuses',
+                    'choices_callback' => '\OnCoreClient\Entity\SubjectDiff::getStatuses',
                 ],
                 'data' => [
                     'name' => 'Data',
@@ -146,10 +156,6 @@ class ExternalModule extends AbstractExternalModule {
         $types['oncore_api_log'] = [
             'label' => 'OnCore API Log',
             'label_plural' => 'OnCore API Logs',
-            'class' => [
-                'name' => 'OnCoreClient\Entity\APILog',
-                'path' => 'classes/entity/APILog.php',
-            ],
             'properties' => [
                 'success' => [
                     'name' => 'Success',
@@ -200,7 +206,7 @@ class ExternalModule extends AbstractExternalModule {
                     'method' => 'delete',
                     'color' => 'red',
                     'messages' => [
-                        'success' => 'The logs have been deleted successfully.',
+                        'success' => 'The logs have been deleted.',
                     ],
                 ],
             ],
@@ -344,6 +350,8 @@ class ExternalModule extends AbstractExternalModule {
             return;
         }
 
+        $factory = new EntityFactory();
+
         foreach ($result->ProtocolSubjects as $subject) {
             $status = str_replace(' ', '_', strtolower($subject->status));
 
@@ -358,7 +366,6 @@ class ExternalModule extends AbstractExternalModule {
                 'data' => json_encode($subject->Subject),
             ];
 
-            $factory = new EntityFactory();
             $factory->create('oncore_subject', $data);
         }
 

@@ -93,8 +93,8 @@ class SubjectsDiffList extends EntityList {
         return $header;
     }
 
-    protected function buildTableRow($entity) {
-        $row = parent::buildTableRow($entity);
+    protected function buildTableRow($data, $entity) {
+        $row = parent::buildTableRow($data, $entity);
         $row['__operations'] = '';
 
         $type = $entity->getType();

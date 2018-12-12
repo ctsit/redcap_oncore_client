@@ -10,14 +10,10 @@ use Records;
 use REDCapEntity\Entity;
 
 class SubjectDiff extends Entity {
-    protected $subject_id;
-    protected $record_id;
-    protected $project_id;
-    protected $subject_name;
-    protected $subject_dob;
-    protected $status;
-    protected $type;
-    protected $diff;
+
+    static function getStatuses() {
+        return ExternalModule::$subjectStatuses;
+    }
 
     function getType() {
         return $this->type;
@@ -29,10 +25,6 @@ class SubjectDiff extends Entity {
         }
 
         return $this->__factory->getInstance('oncore_subject', $this->subject_id);
-    }
-
-    function getStatuses() {
-        return ExternalModule::$subjectStatuses;
     }
 
     function pull($delete = false) {
