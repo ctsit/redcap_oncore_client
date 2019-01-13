@@ -1,10 +1,10 @@
 # REDCap OnCore Client
 This is a REDCap external module that provides integration with OnCore.
 
-It allows administrators to sync OnCore subjects with data entries, and developers to call OnCore API via SOUP.
+It allows REDCap project builders to associate a REDCap project with an OnCore protocol. It also allows developers to call the OnCore API via SOAP.
 
 ## Prerequisites
-- REDCap >= 8.4.0
+- REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.0.0
 
@@ -34,7 +34,7 @@ To do that, access **External Modules** section of your project, make sure OnCor
 
 ## Sync OnCore subjects
 
-TODO.  
+TODO : write this section
 
 
 ## Using the API
@@ -55,7 +55,7 @@ For more complex requests (like `createProtocol` or `registerNewSubjectToProtoco
 This module does not contain details or definitions about OnCore API services. So for further details you may read the WSDL file or web page that was provided to you - use a Desktop client like [SoapUI](https://www.soapui.org/) for that.
 
 ### Supported services
-This module is still on construction so the supported operations so far are:
+This module is still under construction so the supported operations so far are:
 
 - `getProtocol`
 - `getProtocolSubjects`
