@@ -9,8 +9,8 @@ use REDCapEntity\EntityList;
 
 class APILogsList extends EntityList {
 
-    protected function getTableHeaderLabels() {
-        $header = parent::getTableHeaderLabels() + ['__view_data' => ''];
+    protected function getColsLabels() {
+        $header = parent::getColsLabels() + ['__view_data' => ''];
         unset($header['id'], $header['updated'], $header['error_msg']);
         $header['created'] = 'Request time';
 

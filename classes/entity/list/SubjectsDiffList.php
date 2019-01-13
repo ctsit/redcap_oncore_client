@@ -33,7 +33,7 @@ class SubjectsDiffList extends EntityList {
                 $entity = $this->entityFactory->getInstance('oncore_subject_diff', $_POST['oncore_link_subject_id']);
 
                 if ($entity && $entity->linkToRecord($_POST['oncore_link_record_id'], !empty($_POST['oncore_link_override']))) {
-                    StatusMessageQueue::enqueue('The subject has been linked to the record successfully.');
+                    StatusMessageQueue::enqueue('The subject has been linked to the record.');
                 }
                 else {
                     // TODO: error msg.
@@ -76,8 +76,8 @@ class SubjectsDiffList extends EntityList {
         }
     }
 
-    protected function getTableHeaderLabels() {
-        $header = parent::getTableHeaderLabels() + ['__operations' => 'Operations'];
+    protected function getColsLabels() {
+        $header = parent::getColsLabels() + ['__operations' => 'Operations'];
         unset($header['id'], $header['updated'], $header['created']);
 
         $mappings = ExternalModule::$subjectMappings['mappings'];
@@ -165,13 +165,6 @@ class SubjectsDiffList extends EntityList {
         }
 
         return $row;
-    }
-
-    protected function getExposedFilters() {
-        $filters = parent::getExposedFilters();
-        unset($filters['subject_dob']);
-
-        return $filters;
     }
 
     protected function getRowAttributes($data, $entity) {

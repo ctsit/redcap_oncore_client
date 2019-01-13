@@ -16,19 +16,19 @@ class SubjectDiff extends Entity {
     }
 
     function getType() {
-        return $this->type;
+        return $this->data['type'];
     }
 
     function getSubject() {
-        if (empty($this->subject_id)) {
+        if (empty($this->data['subject_id'])) {
             return false;
         }
 
-        return $this->__factory->getInstance('oncore_subject', $this->subject_id);
+        return $this->factory->getInstance('oncore_subject', $this->data['subject_id']);
     }
 
     function pull($delete = false) {
-        if (!($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID || $this->type == 'redcap_only') {
+        if (!($mappings = ExternalModule::$subjectMappings) || $this->data['project_id'] != PROJECT_ID || $this->data['type'] == 'redcap_only') {
             return false;
         }
 
@@ -41,10 +41,10 @@ class SubjectDiff extends Entity {
         $remote_data = $subject->getData();
         $remote_data = $remote_data['data'];
 
-        $record = $this->record_id;
+        $record = $this->data['record_id'];
         $data = [];
 
-        $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['PrimaryIdentifier'] : getAutoId();
+        $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
         $record = Records::addNewRecordToCache($record, $arm, $event_id);
 
         foreach ($mappings['mappings'] as $key => $field) {
@@ -53,7 +53,7 @@ class SubjectDiff extends Entity {
 
         $data = [$record => [$event_id => $data]];
 
-        if (!Records::saveData($this->project_id, 'array', $data, 'overwrite') === true) {
+        if (!Records::saveData($this->data['project_id'], 'array', $data, 'overwrite') === true) {
             return false;
         }
 
@@ -65,7 +65,7 @@ class SubjectDiff extends Entity {
     }
 
     function linkToRecord($record, $sync = true, $delete = false) {
-        if ($this->type != 'oncore_only' || !($mappings = ExternalModule::$subjectMappings) || $this->project_id != PROJECT_ID) {
+        if ($this->data['type'] != 'oncore_only' || !($mappings = ExternalModule::$subjectMappings) || $this->data['project_id'] != PROJECT_ID) {
             return false;
         }
 
@@ -78,7 +78,7 @@ class SubjectDiff extends Entity {
         if ($mappings['mappings']['PrimaryIdentifier'] == $table_pk) {
             $arm = $Proj->eventInfo[$event_id]['arm_num'];
 
-            if (Records::recordExists($this->project_id, $new_record, $arm)) {
+            if (Records::recordExists($this->data['project_id'], $new_record, $arm)) {
                 return false;
             }
 
@@ -86,7 +86,7 @@ class SubjectDiff extends Entity {
             $record = $subject_id;
         }
         else {
-            Records::saveData($this->project_id, 'array', [$record => [$event_id => [$mappings['mappings']['PrimaryIdentifier'] => $subject_id]]]);
+            Records::saveData($this->data['project_id'], 'array', [$record => [$event_id => [$mappings['mappings']['PrimaryIdentifier'] => $subject_id]]]);
         }
 
         $subject = $this->getSubject();
@@ -94,7 +94,7 @@ class SubjectDiff extends Entity {
         $remote_data = $subject->getData();
         $remote_data = $remote_data['data'];
 
-        $record_data = REDCap::getData($this->project_id, 'array', $record, $mappings['mappings'], $event_id);
+        $record_data = REDCap::getData($this->data['project_id'], 'array', $record, $mappings['mappings'], $event_id);
         $diff = [];
 
         foreach ($mappings['mappings'] as $key => $field) {
