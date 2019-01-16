@@ -51,7 +51,7 @@ The same feature can update fields in REDCap that do not match the data in OnCor
 
 The data synchronization work has to be done on a regular basis by study staff as new subjects are enrolled. Make sure to press `Refresh OnCore data` at the beginning of a synch session. You can view the data relevant OnCore data for each record by pressing `View OnCore data` or see the difference between two records by pressing `View Diff`.
 
-Select the records you want to synchronize, then press `Pull OnCore Subjects` when you have made your selections. As you synchronize enrollees, they will disappear from the list. When the list is empty, you REDCap data is in synch with your OnCore data. 
+Select the records you want to synchronize, then press `Pull OnCore Subjects` bring those OnCore records and fields into REDCap. As you synchronize enrollees, they will disappear from the list. When the list is empty, your REDCap data is in synch with your OnCore data. 
 
 ![Synch Done](img/synch_done.png)
 
