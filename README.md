@@ -6,7 +6,7 @@ It allows REDCap project builders to associate a REDCap project with an OnCore p
 ## Prerequisites
 - REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
-- [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.0.0
+- [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.1.0
 
 ## Installation
 - Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v<version_number>`.
@@ -24,35 +24,25 @@ Go to **Control Center > External Modules**, click on OnCore Client's configure 
 
 ![Config form](img/config_form.png)
 
-## Associating a Project with a Protocol
+## Project level configuration
 
 If you already set a valid SIP URL, you may associate a project with a protocol.
 
 To do that, access **External Modules** section of your project, make sure OnCore Client is enabled, and then click on its configure button.
 
-![Protocol association](img/protocol_association.png)
+![Protocol association](img/project_level_configuration.png)
+
+On this page you _must_ select a protocol, check at least one enrollment status, the event to map on and the REDCap field name where the OnCore PrimaryIdentifier will be stored. You have the option of mapping other OnCore demographic fields to REDCap fields as well.
+
+Note that the REDCap fields must either be text fields or they must encode the data in *exactly* the same format as OnCore delivers the data. E.g., OnCode encode a gender of `female` as `F`. If you encode female as `Female` in your REDCap project, records with a gender of Female *will not sync*. They will quietly fail. We strongly recommend you configuring every field populated by the OnCore client as free text to prevent sync failures.
+
+Note also that the OnCore client only supports longitudinal projects at this time. The event name _must_ be specified.
+
 
 ## Sync OnCore subjects
 
 TODO : write this section
 
-
-## Using the API
-
-Here is an example of an API request to get protocol information (`getProtocol`).
-
-```php
-<?php
-
-$module = \ExternalModules\ExternalModules::getModuleInstance('redcap_oncore_client');
-$client = $module->getSoapClient();
-
-$result = $client->request('getProtocol', array('protocolNo' => 'OCR20002'));
-```
-
-For more complex requests (like `createProtocol` or `registerNewSubjectToProtocol`), check the `requests_examples.txt` file, which contains input examples of valid requests. For additional sample code see the testing code in [PBC's REDCap Module](https://github.com/pbchase/my_redcap_module/tree/redcap_oncore_client_test).
-
-This module does not contain details or definitions about OnCore API services. So for further details you may read the WSDL file or web page that was provided to you - use a Desktop client like [SoapUI](https://www.soapui.org/) for that.
 
 ### Supported services
 This module is still under construction so the supported operations so far are:
@@ -70,3 +60,7 @@ You may track your API calls by accessing the logs page. Go to **Control Center*
 ![Request](img/request_details.png)
 
 You may clear the logs by clicking on **Clean logs** button.
+
+## Developer notes
+
+If you want extend the OnCore client to support other OnCore data types, you might find the [Developer's Notes](README-developer.md) helpful.
