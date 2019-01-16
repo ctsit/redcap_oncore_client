@@ -39,9 +39,21 @@ Note that the REDCap fields must either be text fields or they must encode the d
 Note also that the OnCore client only supports longitudinal projects at this time. The event name _must_ be specified.
 
 
-## Sync OnCore subjects
+## Synch OnCore subjects
 
-TODO : write this section
+You can use the `Pull OnCore Subjects` feature to copy enrollees into REDCap from the OnCore enrollment records.
+
+![Pull OnCore Subjects Link](img/pull_oncore_subjects_link.png)
+
+The same feature can update fields in REDCap that do not match the data in OnCore. The interface uses color queues to show which records subjects are only in OnCore (yellow), which records are in REDCap *and* Oncore but have mis-matched data (green) and which REDCap records are not linked to an OnCore subject (blue).
+
+![Pull OnCore Subjects Page](img/pull_oncore_subjects.png)
+
+The data synchronization work has to be done on a regular basis by study staff as new subjects are enrolled. Make sure to press `Refresh OnCore data` at the beginning of a synch session. You can view the data relevant OnCore data for each record by pressing `View OnCore data` or see the difference between two records by pressing `View Diff`.
+
+Select the records you want to synchronize, then press `Pull OnCore Subjects` when you have made your selections. As you synchronize enrollees, they will disappear from the list. When the list is empty, you REDCap data is in synch with your OnCore data. 
+
+![Synch Done](img/synch_done.png)
 
 
 ### Supported services
