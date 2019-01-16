@@ -4,7 +4,7 @@ namespace OnCoreClient;
 use SoapClient;
 
 /**
- * Extends SoapClientin order to handle BOM (Byte-Order-Mark) on responses.
+ * Extends SoapClient in order to handle BOM (Byte-Order-Mark) on responses.
  *
  * Avoids "looks like we got no XML document" errors due to BOM.
  *

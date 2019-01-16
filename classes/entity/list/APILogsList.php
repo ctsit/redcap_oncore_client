@@ -9,17 +9,17 @@ use REDCapEntity\EntityList;
 
 class APILogsList extends EntityList {
 
-    protected function getTableHeaderLabels() {
-        $header = parent::getTableHeaderLabels() + ['__view_data' => ''];
+    protected function getColsLabels() {
+        $header = parent::getColsLabels() + ['__view_data' => ''];
         unset($header['id'], $header['updated'], $header['error_msg']);
-
         $header['created'] = 'Request time';
 
         return $header;
     }
 
-    protected function buildTableRow($entity) {
-        $row = parent::buildTableRow($entity);
+    protected function buildTableRow($data, $entity) {
+        $row = parent::buildTableRow($data, $entity);
+        $id = $entity->getId();
 
         $row['__view_data'] = RCView::button([
             'class' => 'btn btn-info btn-xs',
@@ -30,8 +30,6 @@ class APILogsList extends EntityList {
         $doc = new DOMDocument('1.0');
         $doc->preserveWhiteSpace = false;
         $doc->formatOutput = true;
-
-        $data = $entity->getData();
 
         foreach (['request', 'response'] as $key) {
             if (empty($data[$key])) {

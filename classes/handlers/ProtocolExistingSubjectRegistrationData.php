@@ -1,7 +1,7 @@
 <?php
 
 namespace OnCoreClient;
-require_once dirname(dirname(__FILE__)) . '/OnCoreBaseNode.php';
+require_once dirname(__DIR__) . '/OnCoreBaseNode.php';
 
 use OnCoreClient\OnCoreBaseNode;
 

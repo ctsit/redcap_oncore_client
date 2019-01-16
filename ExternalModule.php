@@ -34,12 +34,27 @@ class ExternalModule extends AbstractExternalModule {
         }
     }
 
+    /**
+     * @inheritdoc.
+     */
+    function redcap_module_system_enable($version) {
+        EntityDB::buildSchema($this->PREFIX);
+    }
+
+    /**
+     * @inheritdoc.
+     */
+    function redcap_module_system_disable($version) {
+        EntityDB::dropSchema($this->PREFIX);
+    }
+
     function redcap_entity_types() {
         $types = [];
 
         $types['oncore_subject_diff'] = [
             'label' => 'OnCore Subject Diff',
             'label_plural' => 'OnCore Subject Diffs',
+            'icon' => 'arrow_rotate_clockwise',
             'special_keys' => [
                 'project' => 'project_id',
                 'label' => 'subject_name',
@@ -84,22 +99,11 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
-                    'choices_callback' => 'getStatuses',
+                    'choices_callback' => '\OnCoreClient\Entity\SubjectDiff::getStatuses',
                 ],
                 'diff' => [
                     'name' => 'Data',
                     'type' => 'json',
-                ],
-            ],
-            'bulk_operations' => [
-                'pull' => [
-                    'label' => 'Pull OnCore Subjects',
-                    'method' => 'pull',
-                    'color' => 'green',
-                    'messages' => [
-                        'success' => 'The subjects have been pulled successfully.',
-                        'confirmation' => 'This operation can override records.',
-                    ],
                 ],
             ],
         ];
@@ -110,10 +114,6 @@ class ExternalModule extends AbstractExternalModule {
             'special_keys' => [
                 'label' => 'subject_id',
                 'project' => 'project_id',
-            ],
-            'class' => [
-                'name' => 'OnCoreClient\Entity\OnCoreSubject',
-                'path' => 'classes/entity/OnCoreSubject.php',
             ],
             'properties' => [
                 'subject_id' => [
@@ -134,7 +134,7 @@ class ExternalModule extends AbstractExternalModule {
                 'status' => [
                     'name' => 'OnCore Status',
                     'type' => 'text',
-                    'choices_callback' => 'getStatuses',
+                    'choices_callback' => '\OnCoreClient\Entity\SubjectDiff::getStatuses',
                 ],
                 'data' => [
                     'name' => 'Data',
@@ -146,10 +146,7 @@ class ExternalModule extends AbstractExternalModule {
         $types['oncore_api_log'] = [
             'label' => 'OnCore API Log',
             'label_plural' => 'OnCore API Logs',
-            'class' => [
-                'name' => 'OnCoreClient\Entity\APILog',
-                'path' => 'classes/entity/APILog.php',
-            ],
+            'icon' => 'report',
             'properties' => [
                 'success' => [
                     'name' => 'Success',
@@ -172,17 +169,17 @@ class ExternalModule extends AbstractExternalModule {
                     'required' => true,
                 ],
                 'project_id' => [
-                    'name' => 'Project',
+                    'name' => 'Project ID',
                     'type' => 'project',
                     'required' => true,
                 ],
                 'request' => [
                     'name' => 'Request',
-                    'type' => 'long_text',
+                    'type' => 'data',
                 ],
                 'response' => [
                     'name' => 'Response',
-                    'type' => 'long_text',
+                    'type' => 'data',
                 ],
                 'error_msg' => [
                     'name' => 'Error message',
@@ -192,17 +189,6 @@ class ExternalModule extends AbstractExternalModule {
             'special_keys' => [
                 'project' => 'project_id',
                 'author' => 'user_id',
-            ],
-            'operations' => ['delete'],
-            'bulk_operations' => [
-                'delete' => [
-                    'label' => 'Delete',
-                    'method' => 'delete',
-                    'color' => 'red',
-                    'messages' => [
-                        'success' => 'The logs have been deleted successfully.',
-                    ],
-                ],
             ],
         ];
 
@@ -237,12 +223,12 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         $mappings = [];
-        foreach ($settings['mappings'] + $settings['mappings']['ContactInfo'] as $key => $field) {
+        foreach ($settings['mappings'] + $settings['mappings']['contact_info'] as $key => $field) {
             if (
                 empty($field) || !is_string($field) || !isset($Proj->metadata[$field]) ||
                 !in_array($Proj->metadata[$field]['form_name'], $Proj->eventsForms[$event_id])
             ) {
-                if ($key == 'PrimaryIdentifier') {
+                if ($key == 'primary_identifier') {
                     // Primary ID is required.
                     return;
                 }
@@ -252,7 +238,7 @@ class ExternalModule extends AbstractExternalModule {
 
             // TODO: skip repeating forms.
 
-            $mappings[$key] = $field;
+            $mappings[$this->_toCamelCase($key)] = $field;
         }
 
         $config = $this->getConfig();
@@ -276,8 +262,10 @@ class ExternalModule extends AbstractExternalModule {
         $labels = [];
 
         foreach (array_merge($config, $config[11]['sub_settings']) as $config_field) {
-            if (isset($mappings[$config_field['key']])) {
-                $labels[$config_field['key']] = $config_field['name'];
+            $key = $this->_toCamelCase($config_field['key']);
+
+            if (isset($mappings[$key])) {
+                $labels[$key] = $config_field['name'];
             }
         }
 
@@ -344,6 +332,8 @@ class ExternalModule extends AbstractExternalModule {
             return;
         }
 
+        $factory = new EntityFactory();
+
         foreach ($result->ProtocolSubjects as $subject) {
             $status = str_replace(' ', '_', strtolower($subject->status));
 
@@ -358,14 +348,13 @@ class ExternalModule extends AbstractExternalModule {
                 'data' => json_encode($subject->Subject),
             ];
 
-            $factory = new EntityFactory();
             $factory->create('oncore_subject', $data);
         }
 
         $this->rebuildSubjectsDiffList();
 
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
-        StatusMessageQueue::enqueue('The OnCore data cache has been refreshed successfully.');
+        StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
     }
 
     function rebuildSubjectsDiffList() {
@@ -408,7 +397,7 @@ class ExternalModule extends AbstractExternalModule {
         $linked = [];
 
         foreach ($subjects as $id => $subject) {
-            $data = $subject->getData();
+            $data = $subject->getData() + ['id' => $subject->getId()];
             $subject_id = $data['subject_id'];
 
             if (isset($records[$subject_id])) {
@@ -569,5 +558,18 @@ class ExternalModule extends AbstractExternalModule {
      */
     protected function setJsSettings($settings) {
         echo '<script>onCoreClient = ' . json_encode($settings) . ';</script>';
+    }
+
+    /**
+     * Aux function that converts a snake case string into camel case.
+     */
+    protected function _toCamelCase($string) {
+        $output = '';
+
+        foreach (explode('_', $string) as $part) {
+            $output .= ucfirst($part);
+        }
+
+        return $output;
     }
 }
