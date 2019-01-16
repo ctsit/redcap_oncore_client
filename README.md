@@ -8,12 +8,14 @@ It allows REDCap project builders to associate a REDCap project with an OnCore p
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.1.0
 
-## Installation
-- Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v<version_number>`.
-- Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client.
-- Go to your project home page, click on **External Modules** link, and then enable OnCore Client.
 
-## Main Configuration
+## Manual Installation
+- Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v0.0.0`.
+- Clone [redcap_entity](https://github.com/ctsit/redcap_entity) repo into `<redcap-root>/modules/redcap_entity_v0.0.0`.
+- Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enable on a per-project basis.
+
+
+## Global Configuration
 Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials.
 
 - **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
