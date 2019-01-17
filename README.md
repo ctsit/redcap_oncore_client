@@ -3,6 +3,11 @@ This is a REDCap external module that provides integration with OnCore.
 
 It allows REDCap project builders to associate a REDCap project with an OnCore protocol. It also allows developers to call the OnCore API via SOAP.
 
+## Current Limitations
+
+* The OnCore Client can only synchronize enrollment data on longitudinal projects.
+* Mapped fields are best configured as text fields with no validation in your REDCap project to prevent synchronization failures on that project.
+
 ## Prerequisites
 - REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
@@ -36,7 +41,9 @@ To do that, access **External Modules** section of your project, make sure OnCor
 
 On this page you _must_ select a protocol, check at least one enrollment status, the event to map on and the REDCap field name where the OnCore PrimaryIdentifier will be stored. You have the option of mapping other OnCore demographic fields to REDCap fields as well.
 
-Note that the REDCap fields must either be text fields or they must encode the data in *exactly* the same format as OnCore delivers the data. E.g., OnCode encode a gender of `female` as `F`. If you encode female as `Female` in your REDCap project, records with a gender of Female *will not sync*. They will quietly fail. We strongly recommend you configuring every field populated by the OnCore client as free text to prevent sync failures.
+When specifying the field mapping, we strongly recommend you only map fields OnCore Fields to  REDCap fields that are defined as free text fields with no validation. If you do map OnCore fields to REDCap fields that use validation, the OnCore data must match the REDCap validaiton rules precisely. Failing to do so will cause records to quietly not synchronize. Addressing that failure and documenting the OnCore field encoding is outside the scope of this document at this time.
+
+To prevent modification of fields that should be set by the OnCore Client, add the @READONLY action tag to the fields. The @READONLY action tag will prevent modification of the those fields via REDap forms, but will still allow the OnCore client to set them.
 
 Note also that the OnCore client only supports longitudinal projects at this time. The event name _must_ be specified.
 
