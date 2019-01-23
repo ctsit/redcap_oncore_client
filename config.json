@@ -1,14 +1,21 @@
 {
     "name": "OnCore Client",
     "namespace": "OnCoreClient\\ExternalModule",
-    "description": "Provides integration with OnCore SOAP API. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
+    "description": "Provides integration with OnCore SIP and SOAP APIs to get protocol and enrollment data into REDCap. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
     "permissions": [
-        "redcap_every_page_top"
+        "redcap_every_page_top",
+        "redcap_module_system_enable",
+        "redcap_module_system_disable"
     ],
     "authors": [
         {
             "name": "Tiago Bember",
             "email": "tbembersimeao@ufl.edu",
+            "institution": "University of Florida - CTSI"
+        },
+        {
+            "name": "Taryn Stoffs",
+            "email": "tls@ufl.edu",
             "institution": "University of Florida - CTSI"
         },
         {
@@ -101,108 +108,108 @@
         },
         {
             "key": "mappings",
-            "name": "Subject Mappings (OnCore -> REDCap fields)",
+            "name": "Subject Field Mappings (OnCore -> REDCap)",
             "type": "sub_settings",
             "sub_settings": [
                 {
-                    "key": "PrimaryIdentifier",
-                    "name": "OnCore Primary identifier",
+                    "key": "primary_identifier",
+                    "name": "PrimaryIdentifier",
                     "type": "field-list",
                     "required": true
                 },
                 {
-                    "key": "FirstName",
-                    "name": "First name",
+                    "key": "first_name",
+                    "name": "FirstName",
                     "type": "field-list"
                 },
                 {
-                    "key": "MiddleName",
-                    "name": "Middle name",
+                    "key": "middle_name",
+                    "name": "MiddleName",
                     "type": "field-list"
                 },
                 {
-                    "key": "LastName",
-                    "name": "Last name",
+                    "key": "last_name",
+                    "name": "LastName",
                     "type": "field-list"
                 },
                 {
-                    "key": "Suffix",
+                    "key": "suffix",
                     "name": "Suffix",
                     "type": "field-list"
                 },
                 {
-                    "key": "SSN",
+                    "key": "s_s_n",
                     "name": "SSN",
                     "type": "field-list"
                 },
                 {
-                    "key": "Gender",
+                    "key": "gender",
                     "name": "Gender",
                     "type": "field-list"
                 },
                 {
-                    "key": "BirthDate",
-                    "name": "DOB",
+                    "key": "birth_date",
+                    "name": "BirthDate",
                     "type": "field-list"
                 },
                 {
-                    "key": "Ethnicity",
+                    "key": "ethnicity",
                     "name": "Ethnicity",
                     "type": "field-list"
                 },
                 {
-                    "key": "Race",
+                    "key": "race",
                     "name": "Race",
                     "type": "field-list"
                 },
                 {
-                    "key": "Comments",
+                    "key": "comments",
                     "name": "Comments",
                     "type": "field-list"
                 },
                 {
-                    "key": "ContactInfo",
-                    "name": "Contact info",
+                    "key": "contact_info",
+                    "name": "ContactInfo",
                     "type": "sub_settings",
                     "sub_settings": [
                         {
-                            "key": "AddressLine",
-                            "name": "Address line",
+                            "key": "address_line",
+                            "name": "AddressLine",
                             "repeatable": true,
                             "type": "field-list"
                         },
                         {
-                            "key": "City",
+                            "key": "city",
                             "name": "City",
                             "type": "field-list"
                         },
                         {
-                            "key": "State",
+                            "key": "state",
                             "name": "State",
                             "type": "field-list"
                         },
                         {
-                            "key": "Zip",
-                            "name": "Zip code",
+                            "key": "zip",
+                            "name": "Zip",
                             "type": "field-list"
                         },
                         {
-                            "key": "County",
-                            "name": "City",
+                            "key": "county",
+                            "name": "County",
                             "type": "field-list"
                         },
                         {
-                            "key": "PhoneNumber",
-                            "name": "Phone number",
+                            "key": "phone_number",
+                            "name": "PhoneNumber",
                             "type": "field-list"
                         },
                         {
-                            "key": "AlternatePhoneNumber",
-                            "name": "Alternate phone number",
+                            "key": "alternate_phone_number",
+                            "name": "AlternatePhoneNumber",
                             "type": "field-list"
                         },
                         {
-                            "key": "EmailAddress",
+                            "key": "email_address",
                             "name": "Email",
                             "type": "field-list"
                         }

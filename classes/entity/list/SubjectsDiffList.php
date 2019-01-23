@@ -33,7 +33,7 @@ class SubjectsDiffList extends EntityList {
                 $entity = $this->entityFactory->getInstance('oncore_subject_diff', $_POST['oncore_link_subject_id']);
 
                 if ($entity && $entity->linkToRecord($_POST['oncore_link_record_id'], !empty($_POST['oncore_link_override']))) {
-                    StatusMessageQueue::enqueue('The subject has been linked to the record successfully.');
+                    StatusMessageQueue::enqueue('The subject has been linked to the record.');
                 }
                 else {
                     // TODO: error msg.
@@ -76,8 +76,8 @@ class SubjectsDiffList extends EntityList {
         }
     }
 
-    protected function getTableHeaderLabels() {
-        $header = parent::getTableHeaderLabels() + ['__operations' => 'Operations'];
+    protected function getColsLabels() {
+        $header = parent::getColsLabels() + ['__operations' => 'Operations'];
         unset($header['id'], $header['updated'], $header['created']);
 
         $mappings = ExternalModule::$subjectMappings['mappings'];
@@ -93,8 +93,8 @@ class SubjectsDiffList extends EntityList {
         return $header;
     }
 
-    protected function buildTableRow($entity) {
-        $row = parent::buildTableRow($entity);
+    protected function buildTableRow($data, $entity) {
+        $row = parent::buildTableRow($data, $entity);
         $row['__operations'] = '';
 
         $type = $entity->getType();
@@ -122,6 +122,11 @@ class SubjectsDiffList extends EntityList {
         }
 
         if ($type != 'oncore_only') {
+            $row['record_id'] = RCView::a([
+                'href' => APP_PATH_WEBROOT . 'DataEntry/record_home.php?pid=' . PROJECT_ID . '&id=' . $row['record_id'] . '&arm=' . getArm(),
+                'target' => '_blank',
+            ], $row['record_id']);
+
             $data = $entity->getData();
 
             if ($type == 'data_diff') {
@@ -162,14 +167,7 @@ class SubjectsDiffList extends EntityList {
         return $row;
     }
 
-    protected function getExposedFilters() {
-        $filters = parent::getExposedFilters();
-        unset($filters['subject_dob']);
-
-        return $filters;
-    }
-
-    protected function getRowAttributes($entity) {
+    protected function getRowAttributes($data, $entity) {
         return ['class' => 'row-' . str_replace('_', '-', $entity->getType())];
     }
 
@@ -179,7 +177,6 @@ class SubjectsDiffList extends EntityList {
     }
 
     protected function isListUpdated() {
-        $module_name = db_escape($this->module->PREFIX . '_' . $this->module->VERSION);
         $sql = '
             SELECT description FROM redcap_log_event
             WHERE
@@ -187,9 +184,9 @@ class SubjectsDiffList extends EntityList {
                     "Create record",
                     "Update record",
                     "Delete record",
-                    "Modify configuration for external module \"' . $module_name  . '\" for project",
+                    "Modify configuration for external module \"' . $this->module->PREFIX . '_' . $this->module->VERSION . '\" for project",
                     "Erase all data",
-                    "OnCore-REDCap Diff rebuild"
+                    "OnCore Subjects Diff rebuild"
                 )
             ORDER BY log_event_id DESC LIMIT 1';
 
@@ -199,7 +196,7 @@ class SubjectsDiffList extends EntityList {
         }
 
         $last_event = db_fetch_assoc($q);
-        return $last_event['description'] == 'OnCore-REDCap Diff rebuild';
+        return $last_event['description'] == 'OnCore Subjects Diff rebuild';
     }
 
     protected function getLinkToSubjectOptions() {
