@@ -41,6 +41,22 @@ On this page you _must_ select a protocol, check at least one enrollment status,
 
 When specifying the field mapping, we strongly recommend you only map fields OnCore Fields to  REDCap fields that are defined as free text fields with no validation. If you do map OnCore fields to REDCap fields that use validation, the OnCore data must match the REDCap validaiton rules precisely. Failing to do so will cause records to quietly not synchronize. Addressing that failure and documenting the OnCore field encoding is outside the scope of this document at this time.
 
+All that said, there is bug in the OnCore API that is returns the ethnicity is a coded value instead of the human-friendly label. These are the codes returned from Oncore and their corresponding labels:
+
+| Code  | Description        |
+| ----  | ------------------ |
+| 3163  | Hispanic or Latino |
+| 3164  | Non-Hispanic       |
+| 15519 | Subject Refused    |
+| 3165  | Unknown            |
+
+If you want ethnicity data from OnCore todisplay with labels in REDCap, make ethnicity a radio button field with these codes:
+
+    3163,Hispanic or Latino
+    3164,Non-Hispanic
+    15519,Subject Refused
+    3165,Unknown
+
 To prevent modification of fields that should be set by the OnCore Client, add the @READONLY action tag to the fields. The @READONLY action tag will prevent modification of the those fields via REDap forms, but will still allow the OnCore client to set them.
 
 Note also that the OnCore client only supports longitudinal projects at this time. The event name _must_ be specified.
