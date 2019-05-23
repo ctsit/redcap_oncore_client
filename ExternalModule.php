@@ -192,6 +192,42 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        $types['user_attributes'] = [
+            'label' => 'Local User Information',
+            'label_plural' => 'Local Users Information',
+            'properties' => [
+                'staff_id' => [
+                    'name' => 'Staff ID',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'user_id' => [
+                    'name' => 'User',
+                    'type' => 'user',
+                ],
+            ],
+        ];
+
+        $types['protocol_staff'] = [
+            'label' => 'OnCore Protocol Staff Information',
+            'label_plural' => 'Local Users Information',
+            'properties' => [
+                'protocol_no' => [
+                    'name' => 'Protocol Number',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'staff_id' => [
+                    'name' => 'Staff ID',
+                    'type' => 'text',
+                ],
+                'stop_date' => [
+                    'name' => 'Stop Date',
+                    'type' => 'date',
+                ],
+            ],
+        ];
+
         return $types;
     }
 
