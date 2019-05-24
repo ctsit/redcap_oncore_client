@@ -32,6 +32,11 @@ class ExternalModule extends AbstractExternalModule {
         if ($project_id && strpos(PAGE, 'ExternalModules/manager/project.php') !== false) {
             $this->setProtocolFormElement();
         }
+
+        ## REMOVE WHEN DONE TESTING
+        $this->fillStudyStaff();
+        ##
+
     }
 
     /**
@@ -391,6 +396,41 @@ class ExternalModule extends AbstractExternalModule {
 
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
         StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
+    }
+
+    function fillStudyStaff() {
+        if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $client = $this->getSoapClient();
+
+        if(!$result = $client->request('getProtocol', array('protocolNo' => $protocol_no))) {
+            return;
+        }
+
+        $factory = new EntityFactory();
+
+        # Work around of $factory->loadInstances not having an all-ids option
+        # may need to add function to EntityFactory
+        $info = $factory->getEntityTypeInfo('protocol_staff');
+        var_dump($info);
+
+        $staffList = $result->BundleBody->ProtocolData->ProtocolStaff;
+
+        foreach($staffList as $key => $value) {
+            $staff_id = $value->Staff->InstitutionStaffId;
+            // TODO: check if entry exists in protocol_staff first, only update stop_date || remove if stop_date < now && !NULL
+
+            $data = [
+                'protocol_no' => $protocol_no,
+                'staff_id' => $staff_id,
+                'stop_date' => $value->StopDate,
+
+            ];
+
+            // $factory->create('protocol_staff', $data);
+        }
     }
 
     function rebuildSubjectsDiffList() {
