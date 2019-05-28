@@ -34,7 +34,7 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         ## REMOVE WHEN DONE TESTING
-        $this->fillStudyStaff();
+        // $this->fillStudyStaff();
         ##
 
     }
@@ -394,6 +394,8 @@ class ExternalModule extends AbstractExternalModule {
 
         $this->rebuildSubjectsDiffList();
 
+        $this->fillStudyStaff();
+
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
         StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
     }
@@ -411,16 +413,15 @@ class ExternalModule extends AbstractExternalModule {
 
         $factory = new EntityFactory();
 
-        # Work around of $factory->loadInstances not having an all-ids option
-        # may need to add function to EntityFactory
-        $info = $factory->getEntityTypeInfo('protocol_staff');
-        var_dump($info);
-
         $staffList = $result->BundleBody->ProtocolData->ProtocolStaff;
+
+        // Workaround for EntityDB not having a unique columns option
+        if (!$this->query('DELETE FROM redcap_entity_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {
+            return;
+        }
 
         foreach($staffList as $key => $value) {
             $staff_id = $value->Staff->InstitutionStaffId;
-            // TODO: check if entry exists in protocol_staff first, only update stop_date || remove if stop_date < now && !NULL
 
             $data = [
                 'protocol_no' => $protocol_no,
@@ -429,7 +430,7 @@ class ExternalModule extends AbstractExternalModule {
 
             ];
 
-            // $factory->create('protocol_staff', $data);
+            $factory->create('protocol_staff', $data);
         }
     }
 
