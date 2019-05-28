@@ -235,7 +235,7 @@
             },
             {
                 "name": "Enter Study Staff",
-                "icon": "fas fa-user-edit",
+                "icon": "group_gear",
                 "url": "plugins/user_attributes.php"
             }
         ]
