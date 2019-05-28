@@ -69,7 +69,34 @@ class SubjectsDiffList extends EntityList {
     }
 
     protected function renderTable() {
+        if (!$protocol_no = $this->module->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $sql = "SELECT * FROM redcap_entity_protocol_staff
+INNER JOIN redcap_entity_user_attributes ON redcap_entity_protocol_staff.staff_id = redcap_entity_user_attributes.staff_id
+WHERE redcap_entity_user_attributes.user_id = '" . USERID ."'
+AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
+
+        if (!$sql_result = $this->module->query($sql)) {
+            return;
+        }
+
+        // $today = date('Y-m-d');
+        // var_dump($today);
+        // Users whose stop_date is in the past are already not being put in the database
+
+        if (!$sql_result = $sql_result->fetch_assoc()) {
+            print_r("You are not authorized to access this data");
+            return;
+        }
+
+        if (!empty($sql_result['stop_date'])) {
+            var_dump($sql_result['stop_date']);
+        }
+
         parent::renderTable();
+
 
         if ($this->rows) {
             include $this->module->getModulePath() . 'templates/table_legend.php';

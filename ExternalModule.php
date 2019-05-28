@@ -32,11 +32,6 @@ class ExternalModule extends AbstractExternalModule {
         if ($project_id && strpos(PAGE, 'ExternalModules/manager/project.php') !== false) {
             $this->setProtocolFormElement();
         }
-
-        ## REMOVE WHEN DONE TESTING
-        // $this->fillStudyStaff();
-        ##
-
     }
 
     /**
@@ -356,6 +351,19 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $sql = "SELECT * FROM redcap_entity_protocol_staff
+INNER JOIN redcap_entity_user_attributes ON redcap_entity_protocol_staff.staff_id = redcap_entity_user_attributes.staff_id
+WHERE redcap_entity_user_attributes.user_id = '" . USERID ."'
+AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
+
+        if (!$sql_result = $this->query($sql)) {
+            return;
+        }
+
+        if (!$sql_result = $sql_result->fetch_assoc()) {
             return;
         }
 
