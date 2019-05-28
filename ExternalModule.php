@@ -431,11 +431,14 @@ AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
         foreach($staffList as $key => $value) {
             $staff_id = $value->Staff->InstitutionStaffId;
 
+            $epoch = strtotime($value->StopDate);
+
+            $epoch = ($epoch) ? ($epoch) : null; // strtotime drops null values
+
             $data = [
                 'protocol_no' => $protocol_no,
                 'staff_id' => $staff_id,
-                'stop_date' => $value->StopDate,
-
+                'stop_date' => $epoch,
             ];
 
             $factory->create('protocol_staff', $data);
