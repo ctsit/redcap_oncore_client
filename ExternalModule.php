@@ -415,13 +415,14 @@ AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
 
         $client = $this->getSoapClient();
 
-        if(!$result = $client->request('getProtocol', array('protocolNo' => $protocol_no))) {
+        if(!$result = $client->request('getProtocolStaff', array('ProtocolNo' => $protocol_no,
+                                                                 'LastName' => ''))) {
             return;
         }
 
         $factory = new EntityFactory();
 
-        $staffList = $result->BundleBody->ProtocolData->ProtocolStaff;
+        $staffList = $result->ProtocolStaff;
 
         // Workaround for EntityDB not having a unique columns option
         if (!$this->query('DELETE FROM redcap_entity_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {

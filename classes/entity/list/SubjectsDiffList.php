@@ -94,7 +94,6 @@ AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
 
         parent::renderTable();
 
-
         if ($this->rows) {
             include $this->module->getModulePath() . 'templates/table_legend.php';
         }
