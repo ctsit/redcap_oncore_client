@@ -90,6 +90,21 @@
                     "type": "checkbox"
                 },
                 {
+                    "key": "on_study",
+                    "name": "On study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "on_treatment",
+                    "name": "On treatment",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "consented",
+                    "name": "Consented",
+                    "type": "checkbox"
+                },
+                {
                     "key": "on_follow_up",
                     "name": "On follow up",
                     "type": "checkbox"

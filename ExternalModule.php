@@ -24,6 +24,7 @@ class ExternalModule extends AbstractExternalModule {
 
     static public $subjectMappings;
     static public $subjectStatuses;
+    static public $validStatuses;
 
     /**
      * @inheritdoc.
@@ -312,6 +313,8 @@ class ExternalModule extends AbstractExternalModule {
             'mappings' => $mappings,
             'labels' => $labels,
         ];
+
+        self::$validStatuses = $settings['valid_statuses'];
     }
 
     protected function setProtocolFormElement() {
@@ -377,6 +380,8 @@ class ExternalModule extends AbstractExternalModule {
             $status = str_replace(' ', '_', strtolower($subject->status));
 
             if (!isset(ExternalModule::$subjectStatuses[$status])) {
+                // Used to flag if OnCore delivers an unknown status
+                // if (!array_key_exists($status, self::$validStatuses)) { print_r($status . "</br>"); }
                 continue;
             }
 
