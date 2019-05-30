@@ -230,6 +230,11 @@
                 "name": "OnCore API Logs",
                 "icon": "report",
                 "url": "plugins/api_logs.php"
+            },
+            {
+                "name": "Enter Study Staff",
+                "icon": "group_gear",
+                "url": "plugins/user_attributes.php"
             }
         ],
         "project": [
@@ -237,11 +242,6 @@
                 "name": "Pull OnCore Subjects",
                 "icon": "arrow_rotate_clockwise",
                 "url": "plugins/subjects_pull.php"
-            },
-            {
-                "name": "Enter Study Staff",
-                "icon": "group_gear",
-                "url": "plugins/user_attributes.php"
             }
         ]
     }
