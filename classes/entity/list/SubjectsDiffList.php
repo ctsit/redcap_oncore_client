@@ -235,7 +235,11 @@ AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
         $subjects = [];
 
         foreach ($entities as $entity_id => $entity) {
-            $subject = $entity->getSubject();
+            if (!$subject = $entity->getSubject()) {
+                // skip if subject is in a different project
+                continue;
+            }
+
             $subjects[$entity_id] = '(' . $subject->getLabel() . ') ' . $entity->getLabel();
         }
 
