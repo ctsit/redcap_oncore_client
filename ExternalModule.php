@@ -477,6 +477,10 @@ class ExternalModule extends AbstractExternalModule {
             $data = $subject->getData() + ['id' => $subject->getId()];
             $subject_id = $data['subject_id'];
 
+            if ($data['project_id'] != PROJECT_ID) {
+                continue;
+            }
+
             if (isset($records[$subject_id])) {
                 $record = $records[$subject_id];
                 $linked[$record] = $data;
