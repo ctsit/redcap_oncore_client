@@ -345,6 +345,7 @@ class ExternalModule extends AbstractExternalModule {
         $this->setJsSettings($settings);
     }
 
+// TODO: roll this and fillProtocolStaff into another container function to avoid allocating redunandant variables
     function clearOnCoreSubjectsCache() {
         if (!$mappings = ExternalModule::$subjectMappings) {
             return;
@@ -354,18 +355,7 @@ class ExternalModule extends AbstractExternalModule {
             return;
         }
 
-        $sql = "SELECT * FROM redcap_entity_protocol_staff
-INNER JOIN redcap_entity_user_attributes ON redcap_entity_protocol_staff.staff_id = redcap_entity_user_attributes.staff_id
-WHERE redcap_entity_user_attributes.user_id = '" . USERID ."'
-AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
-
-        if (!$sql_result = $this->query($sql)) {
-            return;
-        }
-
-        if (!$sql_result = $sql_result->fetch_assoc()) {
-            return;
-        }
+        $this->fillProtocolStaff();
 
         $client = $this->getSoapClient();
 
@@ -402,13 +392,11 @@ AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
 
         $this->rebuildSubjectsDiffList();
 
-        $this->fillStudyStaff();
-
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
         StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
     }
 
-    function fillStudyStaff() {
+    function fillProtocolStaff() {
         if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
             return;
         }
