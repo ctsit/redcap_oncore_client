@@ -24,6 +24,7 @@ class ExternalModule extends AbstractExternalModule {
 
     static public $subjectMappings;
     static public $subjectStatuses;
+    static public $validStatuses;
 
     /**
      * @inheritdoc.
@@ -192,6 +193,42 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        $types['user_attributes'] = [
+            'label' => 'Local User Information',
+            'label_plural' => 'Local Users Information',
+            'properties' => [
+                'staff_id' => [
+                    'name' => 'Staff ID',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'user_id' => [
+                    'name' => 'User',
+                    'type' => 'user',
+                ],
+            ],
+        ];
+
+        $types['protocol_staff'] = [
+            'label' => 'OnCore Protocol Staff Information',
+            'label_plural' => 'Local Users Information',
+            'properties' => [
+                'protocol_no' => [
+                    'name' => 'Protocol Number',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'staff_id' => [
+                    'name' => 'Staff ID',
+                    'type' => 'text',
+                ],
+                'stop_date' => [
+                    'name' => 'Stop Date',
+                    'type' => 'date',
+                ],
+            ],
+        ];
+
         return $types;
     }
 
@@ -276,6 +313,8 @@ class ExternalModule extends AbstractExternalModule {
             'mappings' => $mappings,
             'labels' => $labels,
         ];
+
+        self::$validStatuses = $settings['valid_statuses'];
     }
 
     protected function setProtocolFormElement() {
@@ -309,6 +348,7 @@ class ExternalModule extends AbstractExternalModule {
         $this->setJsSettings($settings);
     }
 
+// TODO: roll this and fillProtocolStaff into another container function to avoid allocating redunandant variables
     function clearOnCoreSubjectsCache() {
         if (!$mappings = ExternalModule::$subjectMappings) {
             return;
@@ -317,6 +357,8 @@ class ExternalModule extends AbstractExternalModule {
         if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
             return;
         }
+
+        $this->fillProtocolStaff();
 
         $client = $this->getSoapClient();
 
@@ -338,6 +380,8 @@ class ExternalModule extends AbstractExternalModule {
             $status = str_replace(' ', '_', strtolower($subject->status));
 
             if (!isset(ExternalModule::$subjectStatuses[$status])) {
+                // Used to flag if OnCore delivers an unknown status
+                // if (!array_key_exists($status, self::$validStatuses)) { print_r($status . "</br>"); }
                 continue;
             }
 
@@ -355,6 +399,44 @@ class ExternalModule extends AbstractExternalModule {
 
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
         StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
+    }
+
+    function fillProtocolStaff() {
+        if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $client = $this->getSoapClient();
+
+        if(!$result = $client->request('getProtocolStaff', array('ProtocolNo' => $protocol_no,
+                                                                 'LastName' => ''))) {
+            return;
+        }
+
+        $factory = new EntityFactory();
+
+        $staffList = $result->ProtocolStaff;
+
+        // Workaround for EntityDB not having a unique columns option
+        if (!$this->query('DELETE FROM redcap_entity_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {
+            return;
+        }
+
+        foreach($staffList as $key => $value) {
+            $staff_id = $value->Staff->InstitutionStaffId;
+
+            $epoch = strtotime($value->StopDate);
+
+            $epoch = ($epoch) ? ($epoch) : null; // strtotime drops null values
+
+            $data = [
+                'protocol_no' => $protocol_no,
+                'staff_id' => $staff_id,
+                'stop_date' => $epoch,
+            ];
+
+            $factory->create('protocol_staff', $data);
+        }
     }
 
     function rebuildSubjectsDiffList() {
@@ -399,6 +481,10 @@ class ExternalModule extends AbstractExternalModule {
         foreach ($subjects as $id => $subject) {
             $data = $subject->getData() + ['id' => $subject->getId()];
             $subject_id = $data['subject_id'];
+
+            if ($data['project_id'] != PROJECT_ID) {
+                continue;
+            }
 
             if (isset($records[$subject_id])) {
                 $record = $records[$subject_id];

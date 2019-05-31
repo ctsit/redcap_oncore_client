@@ -2,6 +2,7 @@
     "name": "OnCore Client",
     "namespace": "OnCoreClient\\ExternalModule",
     "description": "Provides integration with OnCore SIP and SOAP APIs to get protocol and enrollment data into REDCap. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
+    "framework-version": 3,
     "permissions": [
         "redcap_every_page_top",
         "redcap_module_system_enable",
@@ -21,6 +22,11 @@
         {
             "name": "Philip Chase",
             "email": "pbc@ufl.edu",
+            "institution": "University of Florida - CTSI"
+        },
+        {
+            "name": "Kyle Chesney",
+            "email": "kyle.chesney@ufl.edu",
             "institution": "University of Florida - CTSI"
         }
     ],
@@ -81,6 +87,21 @@
                 {
                     "key": "off_study",
                     "name": "Off study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "on_study",
+                    "name": "On study",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "on_treatment",
+                    "name": "On treatment",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "consented",
+                    "name": "Consented",
                     "type": "checkbox"
                 },
                 {
@@ -224,6 +245,11 @@
                 "name": "OnCore API Logs",
                 "icon": "report",
                 "url": "plugins/api_logs.php"
+            },
+            {
+                "name": "Enter Study Staff",
+                "icon": "group_gear",
+                "url": "plugins/user_attributes.php"
             }
         ],
         "project": [
