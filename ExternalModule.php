@@ -513,8 +513,10 @@ class ExternalModule extends AbstractExternalModule {
                 $data = $data[$mappings['event_id']];
                 $diff = [];
 
+                $subject_data_array = json_decode(json_encode($subject_data), true);
+
                 foreach ($mappings['mappings'] as $key => $field) {
-                    $value = $subject_data['data']->{$key};
+                    $value = $this->digNestedData($subject_data_array, $key);
                     if ($value === null) {
                         $value = '';
                     }
@@ -657,5 +659,22 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         return $output;
+    }
+    function digNestedData($subject_data_array, $key) {
+        $value = null;
+        if (property_exists($subject_data_array, $key)) {
+            $value = $subject_data_array->{$key};
+        } else {
+            // keys nested in objects were not being found
+            array_walk_recursive($subject_data_array,
+                                 function($v, $k) use ($key, &$value) {
+                                     if ("$key" == "$k") {
+                                         $value = $v;
+                                     }
+                                 }
+            );
+        }
+
+        return $value;
     }
 }

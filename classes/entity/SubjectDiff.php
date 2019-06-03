@@ -47,8 +47,11 @@ class SubjectDiff extends Entity {
         $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
         $record = Records::addNewRecordToCache($record, $arm, $event_id);
 
+        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
+
         foreach ($mappings['mappings'] as $key => $field) {
-            $data[$field] = $remote_data->{$key};
+            $value = ExternalModule::digNestedData($remote_data_array, $key);
+            $data[$field] = $value;
         }
 
         $data = [$record => [$event_id => $data]];
@@ -97,9 +100,12 @@ class SubjectDiff extends Entity {
         $record_data = REDCap::getData($this->data['project_id'], 'array', $record, $mappings['mappings'], $event_id);
         $diff = [];
 
+        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
+
         foreach ($mappings['mappings'] as $key => $field) {
-            if ($remote_data->{$key} !== $record_data[$field]) {
-                $diff[$key] = [$record_data[$field], $remote_data->{$key}];
+            $value = ExternalModule::digNestedData($remote_data_array, $key);
+            if ($value !== $record_data[$field]) {
+                $diff[$key] = [$record_data[$field], $value];
             }
         }
 
