@@ -44,8 +44,11 @@ class SubjectDiff extends Entity {
         $record = $this->data['record_id'];
         $data = [];
 
+        if (empty($record)) {
         $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
-        $record = Records::addNewRecordToCache($record, $arm, $event_id);
+        }
+
+        Records::addNewRecordToCache($record, $arm, $event_id);
 
         $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
 
