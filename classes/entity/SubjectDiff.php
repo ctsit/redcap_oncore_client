@@ -59,8 +59,17 @@ class SubjectDiff extends Entity {
 
         $data = [$record => [$event_id => $data]];
 
-        if (!Records::saveData($this->data['project_id'], 'array', $data, 'overwrite') === true) {
+        $save_response = Records::saveData($this->data['project_id'], 'array', $data, 'overwrite');
+        if (!$save_response === true) {
             return false;
+        }
+
+        if (!empty($save_response['errors'])) {
+            foreach ($save_response['errors'] as $key => $value) {
+                $error_array = explode(",", $value); // [record, REDCap variable, OnCore value, error message]
+                $clear_error_msg = substr_replace($error_array[3], " $error_array[2]", 10, 0);
+                print_r("Error pulling record $error_array[0]. $clear_error_msg</br>");
+            }
         }
 
         if ($delete) {
