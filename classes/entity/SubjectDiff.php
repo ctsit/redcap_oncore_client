@@ -8,6 +8,7 @@ use OnCoreClient\ExternalModule\ExternalModule;
 use REDCap;
 use Records;
 use REDCapEntity\Entity;
+use REDCapEntity\StatusMessageQueue;
 
 class SubjectDiff extends Entity {
 
@@ -65,11 +66,24 @@ class SubjectDiff extends Entity {
         }
 
         if (!empty($save_response['errors'])) {
+            $clear_error_msg = "";
             foreach ($save_response['errors'] as $key => $value) {
                 $error_array = explode(",", $value); // [record, REDCap variable, OnCore value, error message]
-                $clear_error_msg = substr_replace($error_array[3], " $error_array[2]", 10, 0);
-                print_r("Error pulling record $error_array[0]. $clear_error_msg</br>");
+                $clear_error_msg .= "</br>Error pulling to record $error_array[0]: " . substr_replace($error_array[3], " $error_array[2]", 10, 0);
             }
+
+            StatusMessageQueue::enqueue($clear_error_msg, $type = 'error');
+            return false;
+        }
+
+        if (!empty($save_response['warnings'])) {
+            $clear_warning_msg = "";
+            foreach ($save_response['warnings'] as $key => $value) {
+                // TODO: find a warning to format properly
+                $clear_warning_msg .= "</br>$value";
+            }
+
+            StatusMessageQueue::enqueue($clear_warning_msg, $type = 'warning');
         }
 
         if ($delete) {
