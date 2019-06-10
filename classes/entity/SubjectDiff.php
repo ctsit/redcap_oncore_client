@@ -8,6 +8,7 @@ use OnCoreClient\ExternalModule\ExternalModule;
 use REDCap;
 use Records;
 use REDCapEntity\Entity;
+use REDCapEntity\StatusMessageQueue;
 
 class SubjectDiff extends Entity {
 
@@ -59,8 +60,30 @@ class SubjectDiff extends Entity {
 
         $data = [$record => [$event_id => $data]];
 
-        if (!Records::saveData($this->data['project_id'], 'array', $data, 'overwrite') === true) {
+        $save_response = Records::saveData($this->data['project_id'], 'array', $data, 'overwrite');
+        if (!$save_response === true) {
             return false;
+        }
+
+        if (!empty($save_response['errors'])) {
+            $clear_error_msg = "";
+            foreach ($save_response['errors'] as $key => $value) {
+                $error_array = explode(",", $value); // [record, REDCap variable, OnCore value, error message]
+                $clear_error_msg .= "</br>Error pulling to record $error_array[0]: " . substr_replace($error_array[3], " $error_array[2]", 10, 0);
+            }
+
+            StatusMessageQueue::enqueue($clear_error_msg, $type = 'error');
+            return false;
+        }
+
+        if (!empty($save_response['warnings'])) {
+            $clear_warning_msg = "";
+            foreach ($save_response['warnings'] as $key => $value) {
+                // TODO: find a warning to format properly
+                $clear_warning_msg .= "</br>$value";
+            }
+
+            StatusMessageQueue::enqueue($clear_warning_msg, $type = 'warning');
         }
 
         if ($delete) {
