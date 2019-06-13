@@ -54,8 +54,38 @@
             "functionName": "OnCoreClient.passwordFieldHandler"
         },
         {
+            "key": "protocol_lookup_method",
+            "name": "Protocol lookup method",
+            "type": "dropdown",
+            "choices": [
+                {
+                    "name": "SIP",
+                    "value": "sip"
+                },
+                {
+                    "name": "API",
+                    "value": "api"
+                }
+            ]
+        },
+        {
             "key": "sip",
             "name": "SIP URL",
+            "type": "text"
+        },
+        {
+            "key": "ocr_api_url",
+            "name": "OCR API URL",
+            "type": "text"
+        },
+        {
+            "key": "ocr_api_user",
+            "name": "OCR API Username",
+            "type": "text"
+        },
+        {
+            "key": "ocr_api_key",
+            "name": "OCR API Key",
             "type": "text"
         },
         {
