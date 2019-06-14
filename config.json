@@ -297,9 +297,9 @@
                 "url": "plugins/api_logs.php"
             },
             {
-                "name": "Enter Study Staff",
+                "name": "Enter User Institution IDs",
                 "icon": "group_gear",
-                "url": "plugins/user_attributes.php"
+                "url": "plugins/oncore_staff_identifier_entry.php"
             }
         ],
         "project": [
