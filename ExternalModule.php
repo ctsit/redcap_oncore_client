@@ -326,11 +326,9 @@ class ExternalModule extends AbstractExternalModule {
         if ($method == 'sip') {
             $url = $this->getSystemSetting('sip');
             if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
-                print_r("<pre>");
                 foreach ($xml->protocol as $item) {
                     $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
                 }
-                print_r("</pre>");
 
                 $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
