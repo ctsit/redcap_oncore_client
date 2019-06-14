@@ -3,7 +3,6 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 
 ## Current Limitations
 
-* The OnCore Client can only synchronize enrollment data on longitudinal projects.
 * Mapped fields are best configured as text fields with no validation in your REDCap project to prevent synchronization failures on that project.
 
 ## Prerequisites
@@ -65,7 +64,7 @@ If you want ethnicity data from OnCore todisplay with labels in REDCap, make eth
 
 To prevent modification of fields that should be set by the OnCore Client, add the @READONLY action tag to the fields. The @READONLY action tag will prevent modification of the those fields via REDap forms, but will still allow the OnCore client to set them.
 
-Note also that the OnCore client only supports longitudinal projects at this time. The event name _must_ be specified.
+Note also that while the OnCore client supports non-longitudinal projects, the event name _must_ still be specified.
 
 
 ## Synch OnCore subjects
