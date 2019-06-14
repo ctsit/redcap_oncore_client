@@ -23,15 +23,21 @@ Go to **Control Center > External Modules**, click on OnCore Client's configure 
 
 - **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
 - **Login**: Your OnCore client user ID
-- **Passord**: Your OnCore client password
-- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain` - this is required to associate projects with protocols
+- **Password**: Your OnCore client password
+- **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or API) - _one_ of these is required to associate projects with protocols
+- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain`. Returns **only*** protocols open to enrollment
+- **OCR API URL**: The URL of OnCore API (Application Programming Interface), e.g. `https://oncore-test.ahc.ufl.edu/ocr/api/protocols`. Returns **all** protocols, requires API credentials
+- **OCR API Username**: Your OnCore API user name
+- **OCR API Key**: Your OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
 
 ![Config form](img/config_form.png)
 
+You will also need to provide the institution ID (e.g. an 8 digit UFID) for each user for them to access the protocol data. This is available at **Control Center > Enter Study Staff**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol.
+
 ## Project level configuration
 
-If you already set a valid SIP URL, you may associate a project with a protocol.
+If you already set a valid SIP URL or API credentials, you may associate a project with a protocol.
 
 To do that, access **External Modules** section of your project, make sure OnCore Client is enabled, and then click on its configure button.
 
@@ -84,6 +90,7 @@ This module is still under construction so the supported operations so far are:
 
 - `getProtocol`
 - `getProtocolSubjects`
+- `getProtocolStaff`
 - `createProtocol`
 - `registerNewSubjectToProtocol`
 - `registerExistingSubjectToProtocol`
