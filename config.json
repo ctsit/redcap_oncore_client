@@ -107,7 +107,10 @@
                         "field": "protocol_lookup_method",
                         "op": "=",
                         "value": "api"
-                    }
+                    },
+            "source": "js/password.js",
+            "functionName": "OnCoreClient.passwordFieldHandler"
+
         },
         {
             "key": "log_enabled",
