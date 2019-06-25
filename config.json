@@ -54,9 +54,60 @@
             "functionName": "OnCoreClient.passwordFieldHandler"
         },
         {
+            "key": "protocol_lookup_method",
+            "name": "Protocol lookup method",
+            "type": "dropdown",
+            "required": true,
+            "choices": [
+                {
+                    "name": "SIP",
+                    "value": "sip"
+                },
+                {
+                    "name": "API",
+                    "value": "api"
+                }
+            ]
+        },
+        {
             "key": "sip",
             "name": "SIP URL",
-            "type": "text"
+            "type": "text",
+                    "branchingLogic": {
+                        "field": "protocol_lookup_method",
+                        "op": "=",
+                        "value": "sip"
+                    }
+        },
+        {
+            "key": "ocr_api_url",
+            "name": "OCR API URL",
+            "type": "text",
+                    "branchingLogic": {
+                        "field": "protocol_lookup_method",
+                        "op": "=",
+                        "value": "api"
+                    }
+        },
+        {
+            "key": "ocr_api_user",
+            "name": "OCR API Username",
+            "type": "text",
+                    "branchingLogic": {
+                        "field": "protocol_lookup_method",
+                        "op": "=",
+                        "value": "api"
+                    }
+        },
+        {
+            "key": "ocr_api_key",
+            "name": "OCR API Key",
+            "type": "text",
+                    "branchingLogic": {
+                        "field": "protocol_lookup_method",
+                        "op": "=",
+                        "value": "api"
+                    }
         },
         {
             "key": "log_enabled",

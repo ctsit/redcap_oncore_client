@@ -320,33 +320,78 @@ class ExternalModule extends AbstractExternalModule {
     protected function setProtocolFormElement() {
         $settings = ['modulePrefix' => $this->PREFIX];
 
-        $url = $this->getSystemSetting('sip');
-        if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
-            $protocols = [];
-            foreach ($xml->protocol as $item) {
-                $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
-            }
+        $protocols = [];
+        $method = $this->getSystemSetting('protocol_lookup_method');
 
-            $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
-        }
-        else {
-            if (SUPER_USER) {
-                $attrs = [
-                    'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
-                    'style' => 'color: #000066; font-weight: bold;',
-                ];
+        if ($method == 'sip') {
+            $url = $this->getSystemSetting('sip');
+            if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
+                foreach ($xml->protocol as $item) {
+                    $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
+                }
 
-                $link = RCView::a($attrs, 'Contol Center > External Modules');
-                $settings['msg'] = RCView::p([], 'The SIP URL has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
             else {
-                $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                if (SUPER_USER) {
+                    $attrs = [
+                        'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
+                        'style' => 'color: #000066; font-weight: bold;',
+                    ];
+
+                    $link = RCView::a($attrs, 'Contol Center > External Modules');
+                    $settings['msg'] = RCView::p([], 'The SIP URL has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                }
+                else {
+                    $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                }
             }
+        }
+        else if ($method == 'api') {
+            if ( (!$url = $this->getSystemSetting('ocr_api_url')) || (!$user = $this->getSystemSetting('ocr_api_user')) || (!$api_key = $this->getSystemSetting('ocr_api_key')) ) {
+                if (SUPER_USER) {
+                    $attrs = [
+                        'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
+                        'style' => 'color: #000066; font-weight: bold;',
+                    ];
+
+                    $link = RCView::a($attrs, 'Contol Center > External Modules');
+                    $settings['msg'] = RCView::p([], 'The API authorization has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                } else {
+                $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                }
+            }
+
+            $headers = [
+                'x-api-key: ' . $api_key,
+                'x-api-user: ' . $user
+            ];
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+            $client = $this->getSoapClient();
+
+            if ($result = json_decode(curl_exec($ch))) {
+                foreach ($result->protocols as $no => $code){
+                    $protocol = $code[0];
+                    $title = $code[1];
+                    $protocols[$protocol] = REDCap::escapeHtml('(' .  $protocol . ') ' . $title);
+                }
+
+                $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
+            }
+            curl_close($ch);
+
         }
 
         $this->includeJs('js/config.js');
         $this->setJsSettings($settings);
     }
+
 
 // TODO: roll this and fillProtocolStaff into another container function to avoid allocating redunandant variables
     function clearOnCoreSubjectsCache() {
