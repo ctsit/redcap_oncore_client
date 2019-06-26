@@ -69,6 +69,29 @@ class SubjectsDiffList extends EntityList {
     }
 
     protected function renderTable() {
+        if (!$protocol_no = $this->module->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $sql = "SELECT * FROM redcap_entity_oncore_protocol_staff
+INNER JOIN redcap_entity_oncore_staff_identifier ON redcap_entity_oncore_protocol_staff.staff_id = redcap_entity_oncore_staff_identifier.staff_id
+WHERE redcap_entity_oncore_staff_identifier.user_id = '" . USERID ."'
+AND redcap_entity_oncore_protocol_staff.protocol_no = '$protocol_no'";
+
+        if (!$sql_result = $this->module->query($sql)) {
+            return;
+        }
+
+        if (!$sql_result = $sql_result->fetch_assoc()) {
+            print_r("You are not authorized to access this data.");
+            return;
+        }
+
+        if (!empty($sql_result['stop_date']) && $sql_result['stop_date'] <= date('Y-m-d')) {
+            print_r("You are no longer authorized to access this data.");
+            return;
+        }
+
         parent::renderTable();
 
         if ($this->rows) {
@@ -212,7 +235,11 @@ class SubjectsDiffList extends EntityList {
         $subjects = [];
 
         foreach ($entities as $entity_id => $entity) {
-            $subject = $entity->getSubject();
+            if (!$subject = $entity->getSubject()) {
+                // skip if subject is in a different project
+                continue;
+            }
+
             $subjects[$entity_id] = '(' . $subject->getLabel() . ') ' . $entity->getLabel();
         }
 

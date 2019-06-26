@@ -8,6 +8,7 @@ use OnCoreClient\ExternalModule\ExternalModule;
 use REDCap;
 use Records;
 use REDCapEntity\Entity;
+use REDCapEntity\StatusMessageQueue;
 
 class SubjectDiff extends Entity {
 
@@ -44,17 +45,45 @@ class SubjectDiff extends Entity {
         $record = $this->data['record_id'];
         $data = [];
 
+        if (empty($record)) {
         $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
-        $record = Records::addNewRecordToCache($record, $arm, $event_id);
+        }
+
+        Records::addNewRecordToCache($project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id);
+
+        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
 
         foreach ($mappings['mappings'] as $key => $field) {
-            $data[$field] = $remote_data->{$key};
+            $value = ExternalModule::digNestedData($remote_data_array, $key);
+            $data[$field] = $value;
         }
 
         $data = [$record => [$event_id => $data]];
 
-        if (!Records::saveData($this->data['project_id'], 'array', $data, 'overwrite') === true) {
+        $save_response = Records::saveData($this->data['project_id'], 'array', $data, 'overwrite');
+        if (!$save_response === true) {
             return false;
+        }
+
+        if (!empty($save_response['errors'])) {
+            $clear_error_msg = "";
+            foreach ($save_response['errors'] as $key => $value) {
+                $error_array = explode(",", $value); // [record, REDCap variable, OnCore value, error message]
+                $clear_error_msg .= "</br>Error pulling to record $error_array[0]: " . substr_replace($error_array[3], " $error_array[2]", 10, 0);
+            }
+
+            StatusMessageQueue::enqueue($clear_error_msg, $type = 'error');
+            return false;
+        }
+
+        if (!empty($save_response['warnings'])) {
+            $clear_warning_msg = "";
+            foreach ($save_response['warnings'] as $key => $value) {
+                // TODO: find a warning to format properly
+                $clear_warning_msg .= "</br>$value";
+            }
+
+            StatusMessageQueue::enqueue($clear_warning_msg, $type = 'warning');
         }
 
         if ($delete) {
@@ -97,9 +126,12 @@ class SubjectDiff extends Entity {
         $record_data = REDCap::getData($this->data['project_id'], 'array', $record, $mappings['mappings'], $event_id);
         $diff = [];
 
+        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
+
         foreach ($mappings['mappings'] as $key => $field) {
-            if ($remote_data->{$key} !== $record_data[$field]) {
-                $diff[$key] = [$record_data[$field], $remote_data->{$key}];
+            $value = ExternalModule::digNestedData($remote_data_array, $key);
+            if ($value !== $record_data[$field]) {
+                $diff[$key] = [$record_data[$field], $value];
             }
         }
 

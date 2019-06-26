@@ -24,6 +24,7 @@ class ExternalModule extends AbstractExternalModule {
 
     static public $subjectMappings;
     static public $subjectStatuses;
+    static public $validStatuses;
 
     /**
      * @inheritdoc.
@@ -192,6 +193,42 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        $types['oncore_staff_identifier'] = [
+            'label' => 'REDCap User Institution ID',
+            'label_plural' => 'REDCap Users Institution IDs',
+            'properties' => [
+                'staff_id' => [
+                    'name' => 'Institution ID',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'user_id' => [
+                    'name' => 'User',
+                    'type' => 'user',
+                ],
+            ],
+        ];
+
+        $types['oncore_protocol_staff'] = [
+            'label' => 'OnCore Protocol Staff Information',
+            'label_plural' => 'OnCore Protocol Staff Attributes',
+            'properties' => [
+                'protocol_no' => [
+                    'name' => 'Protocol Number',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                'staff_id' => [
+                    'name' => 'Staff ID',
+                    'type' => 'text',
+                ],
+                'stop_date' => [
+                    'name' => 'Stop Date',
+                    'type' => 'date',
+                ],
+            ],
+        ];
+
         return $types;
     }
 
@@ -276,39 +313,87 @@ class ExternalModule extends AbstractExternalModule {
             'mappings' => $mappings,
             'labels' => $labels,
         ];
+
+        self::$validStatuses = $settings['valid_statuses'];
     }
 
     protected function setProtocolFormElement() {
         $settings = ['modulePrefix' => $this->PREFIX];
 
-        $url = $this->getSystemSetting('sip');
-        if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
-            $protocols = [];
-            foreach ($xml->protocol as $item) {
-                $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
-            }
+        $protocols = [];
+        $method = $this->getSystemSetting('protocol_lookup_method');
 
-            $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
-        }
-        else {
-            if (SUPER_USER) {
-                $attrs = [
-                    'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
-                    'style' => 'color: #000066; font-weight: bold;',
-                ];
+        if ($method == 'sip') {
+            $url = $this->getSystemSetting('sip');
+            if ($url && ($xml = simplexml_load_file($url . '?hdn_function=SIP_PROTOCOL_LISTINGS&format=xml'))) {
+                foreach ($xml->protocol as $item) {
+                    $protocols[REDCap::escapeHtml($item->no)] = REDCap::escapeHtml('(' . $item->no . ') ' . $item->title);
+                }
 
-                $link = RCView::a($attrs, 'Contol Center > External Modules');
-                $settings['msg'] = RCView::p([], 'The SIP URL has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
             else {
-                $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                if (SUPER_USER) {
+                    $attrs = [
+                        'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
+                        'style' => 'color: #000066; font-weight: bold;',
+                    ];
+
+                    $link = RCView::a($attrs, 'Contol Center > External Modules');
+                    $settings['msg'] = RCView::p([], 'The SIP URL has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                }
+                else {
+                    $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                }
             }
+        }
+        else if ($method == 'api') {
+            if ( (!$url = $this->getSystemSetting('ocr_api_url')) || (!$user = $this->getSystemSetting('ocr_api_user')) || (!$api_key = $this->getSystemSetting('ocr_api_key')) ) {
+                if (SUPER_USER) {
+                    $attrs = [
+                        'href' => APP_PATH_WEBROOT . 'ExternalModules/manager/control_center.php',
+                        'style' => 'color: #000066; font-weight: bold;',
+                    ];
+
+                    $link = RCView::a($attrs, 'Contol Center > External Modules');
+                    $settings['msg'] = RCView::p([], 'The API authorization has not been properly configured. To do that, go to ' . $link . ' and then configure OnCore Client.');
+                } else {
+                $settings['msg'] = RCView::p([], 'OnCore Client global configuration is incomplete or incorrect. Please contact site administrators.');
+                }
+            }
+
+            $headers = [
+                'x-api-key: ' . $api_key,
+                'x-api-user: ' . $user
+            ];
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+            $client = $this->getSoapClient();
+
+            if ($result = json_decode(curl_exec($ch))) {
+                foreach ($result->protocols as $no => $code){
+                    $protocol = $code[0];
+                    $title = $code[1];
+                    $protocols[$protocol] = REDCap::escapeHtml('(' .  $protocol . ') ' . $title);
+                }
+
+                $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
+            }
+            curl_close($ch);
+
         }
 
         $this->includeJs('js/config.js');
         $this->setJsSettings($settings);
     }
 
+
+// TODO: roll this and fillProtocolStaff into another container function to avoid allocating redunandant variables
     function clearOnCoreSubjectsCache() {
         if (!$mappings = ExternalModule::$subjectMappings) {
             return;
@@ -317,6 +402,8 @@ class ExternalModule extends AbstractExternalModule {
         if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
             return;
         }
+
+        $this->fillProtocolStaff();
 
         $client = $this->getSoapClient();
 
@@ -338,6 +425,8 @@ class ExternalModule extends AbstractExternalModule {
             $status = str_replace(' ', '_', strtolower($subject->status));
 
             if (!isset(ExternalModule::$subjectStatuses[$status])) {
+                // Used to flag if OnCore delivers an unknown status
+                // if (!array_key_exists($status, self::$validStatuses)) { print_r($status . "</br>"); }
                 continue;
             }
 
@@ -355,6 +444,44 @@ class ExternalModule extends AbstractExternalModule {
 
         REDCap::logEvent('OnCore Subjects cache clear', '', '', null, null, PROJECT_ID);
         StatusMessageQueue::enqueue('The OnCore data cache has been refreshed.');
+    }
+
+    function fillProtocolStaff() {
+        if (!$protocol_no = $this->getProjectSetting('protocol_no')) {
+            return;
+        }
+
+        $client = $this->getSoapClient();
+
+        if(!$result = $client->request('getProtocolStaff', array('ProtocolNo' => $protocol_no,
+                                                                 'LastName' => ''))) {
+            return;
+        }
+
+        $factory = new EntityFactory();
+
+        $staffList = $result->ProtocolStaff;
+
+        // Workaround for EntityDB not having a unique columns option
+        if (!$this->query('DELETE FROM redcap_entity_oncore_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {
+            return;
+        }
+
+        foreach($staffList as $key => $value) {
+            $staff_id = $value->Staff->InstitutionStaffId;
+
+            $epoch = strtotime($value->StopDate);
+
+            $epoch = ($epoch) ? ($epoch) : null; // strtotime drops null values
+
+            $data = [
+                'protocol_no' => $protocol_no,
+                'staff_id' => $staff_id,
+                'stop_date' => $epoch,
+            ];
+
+            $factory->create('oncore_protocol_staff', $data);
+        }
     }
 
     function rebuildSubjectsDiffList() {
@@ -400,6 +527,10 @@ class ExternalModule extends AbstractExternalModule {
             $data = $subject->getData() + ['id' => $subject->getId()];
             $subject_id = $data['subject_id'];
 
+            if ($data['project_id'] != PROJECT_ID) {
+                continue;
+            }
+
             if (isset($records[$subject_id])) {
                 $record = $records[$subject_id];
                 $linked[$record] = $data;
@@ -427,8 +558,10 @@ class ExternalModule extends AbstractExternalModule {
                 $data = $data[$mappings['event_id']];
                 $diff = [];
 
+                $subject_data_array = json_decode(json_encode($subject_data), true);
+
                 foreach ($mappings['mappings'] as $key => $field) {
-                    $value = $subject_data['data']->{$key};
+                    $value = $this->digNestedData($subject_data_array, $key);
                     if ($value === null) {
                         $value = '';
                     }
@@ -571,5 +704,22 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         return $output;
+    }
+    function digNestedData($subject_data_array, $key) {
+        $value = null;
+        if (property_exists($subject_data_array, $key)) {
+            $value = $subject_data_array->{$key};
+        } else {
+            // keys nested in objects were not being found
+            array_walk_recursive($subject_data_array,
+                                 function($v, $k) use ($key, &$value) {
+                                     if ("$key" == "$k") {
+                                         $value = $v;
+                                     }
+                                 }
+            );
+        }
+
+        return $value;
     }
 }
