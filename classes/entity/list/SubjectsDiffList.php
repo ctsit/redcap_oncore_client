@@ -73,10 +73,10 @@ class SubjectsDiffList extends EntityList {
             return;
         }
 
-        $sql = "SELECT * FROM redcap_entity_protocol_staff
-INNER JOIN redcap_entity_user_attributes ON redcap_entity_protocol_staff.staff_id = redcap_entity_user_attributes.staff_id
-WHERE redcap_entity_user_attributes.user_id = '" . USERID ."'
-AND redcap_entity_protocol_staff.protocol_no = '$protocol_no'";
+        $sql = "SELECT * FROM redcap_entity_oncore_protocol_staff
+INNER JOIN redcap_entity_oncore_staff_identifier ON redcap_entity_oncore_protocol_staff.staff_id = redcap_entity_oncore_staff_identifier.staff_id
+WHERE redcap_entity_oncore_staff_identifier.user_id = '" . USERID ."'
+AND redcap_entity_oncore_protocol_staff.protocol_no = '$protocol_no'";
 
         if (!$sql_result = $this->module->query($sql)) {
             return;

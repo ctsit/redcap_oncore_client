@@ -193,12 +193,12 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
-        $types['user_attributes'] = [
-            'label' => 'Local User Information',
-            'label_plural' => 'Local Users Information',
+        $types['oncore_staff_identifier'] = [
+            'label' => 'REDCap User Institution ID',
+            'label_plural' => 'REDCap Users Institution IDs',
             'properties' => [
                 'staff_id' => [
-                    'name' => 'Staff ID',
+                    'name' => 'Institution ID',
                     'type' => 'text',
                     'required' => true,
                 ],
@@ -209,9 +209,9 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
-        $types['protocol_staff'] = [
+        $types['oncore_protocol_staff'] = [
             'label' => 'OnCore Protocol Staff Information',
-            'label_plural' => 'Local Users Information',
+            'label_plural' => 'OnCore Protocol Staff Attributes',
             'properties' => [
                 'protocol_no' => [
                     'name' => 'Protocol Number',
@@ -463,7 +463,7 @@ class ExternalModule extends AbstractExternalModule {
         $staffList = $result->ProtocolStaff;
 
         // Workaround for EntityDB not having a unique columns option
-        if (!$this->query('DELETE FROM redcap_entity_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {
+        if (!$this->query('DELETE FROM redcap_entity_oncore_protocol_staff WHERE protocol_no = \'' . $protocol_no . '\'')) {
             return;
         }
 
@@ -480,7 +480,7 @@ class ExternalModule extends AbstractExternalModule {
                 'stop_date' => $epoch,
             ];
 
-            $factory->create('protocol_staff', $data);
+            $factory->create('oncore_protocol_staff', $data);
         }
     }
 
