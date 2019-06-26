@@ -2,6 +2,26 @@
 All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [2.0.0] - 2019-06-26
+### Added
+- Add support for UF OCR API (Kyle Chesney)
+- Optionally read complete list of protocols via UF OCR API (Kyle Chesney)
+- Verify logged in user is on study staff before showing enrollment data (Kyle Chesney)
+- Notify users which records were not pulled and which variable collided (Kyle Chesney)
+
+### Changed
+- Implement better entity table names, update README with changes (Kyle Chesney)
+- Update README to reflect non-longitudinal projects are supported (Kyle Chesney)
+- Update to support REDCap v9 (Kyle Chesney)
+- Overwrite instead of adding new records (Kyle Chesney)
+- add digNestedData function to add previously missed data (Kyle Chesney)
+- Add often missed statuses, provide unused method to check for more (Kyle Chesney)
+- solve subjects_diff db replicating subjects across in each project (Kyle Chesney)
+- Do not check on subjects in different projects, address issue #17 (Kyle Chesney)
+- correct issue with only null dates being entered, implement checking (Kyle Chesney)
+
+
 ## [1.2.0] - 2019-01-23
 ### Added
 - Write 'Synch OnCore subjects' section of README (Philip Chase)
