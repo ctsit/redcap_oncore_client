@@ -116,6 +116,11 @@
             "key": "log_enabled",
             "name": "Log requests",
             "type": "checkbox"
+        },
+        {
+            "key": "staff_id_server_variable_name",
+            "name": "Name of server variable used to populate Institution ID",
+            "type": "text"
         }
     ],
     "project-settings": [

@@ -73,6 +73,20 @@ class SubjectsDiffList extends EntityList {
             return;
         }
 
+        if ($server_var = $this->module->getSystemSetting('staff_id_server_variable_name')) {
+            if ($server_val = $_SERVER[$server_var]) {
+                // Create or update user credentials
+                $sql = "INSERT INTO redcap_entity_oncore_staff_identifier (id, updated, staff_id, user_id)
+VALUES(1, NOW(), '" . $server_val . "', '" . USERID . "')
+ON DUPLICATE KEY UPDATE
+updated = VALUES (updated),
+staff_id = VALUES (staff_id),
+user_id = VALUES (user_id)
+";
+                $this->module->query($sql);
+            }
+        }
+
         $sql = "SELECT * FROM redcap_entity_oncore_protocol_staff
 INNER JOIN redcap_entity_oncore_staff_identifier ON redcap_entity_oncore_protocol_staff.staff_id = redcap_entity_oncore_staff_identifier.staff_id
 WHERE redcap_entity_oncore_staff_identifier.user_id = '" . USERID ."'
