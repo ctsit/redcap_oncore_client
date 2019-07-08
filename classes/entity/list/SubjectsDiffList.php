@@ -73,16 +73,35 @@ class SubjectsDiffList extends EntityList {
             return;
         }
 
-        $sql = "SELECT * FROM redcap_entity_oncore_protocol_staff
-INNER JOIN redcap_entity_oncore_staff_identifier ON redcap_entity_oncore_protocol_staff.staff_id = redcap_entity_oncore_staff_identifier.staff_id
-WHERE redcap_entity_oncore_staff_identifier.user_id = '" . USERID ."'
-AND redcap_entity_oncore_protocol_staff.protocol_no = '$protocol_no'";
+        if ($server_var = $this->module->getSystemSetting('staff_id_server_variable_name')) {
+            if ($server_val = $_SERVER[$server_var]) {
+                // Create or update user credentials
+                // hack to make user_id a pseudo primary key
+                if ($id = $this->entityFactory->query('oncore_staff_identifier')->condition('user_id', USERID)->execute()) {
+                    $id = array_values($id)[0]->getId();
+                }
+                $entity = $this->entityFactory->getInstance('oncore_staff_identifier', $id); // null id defaults to a new entry
 
-        if (!$sql_result = $this->module->query($sql)) {
-            return;
+                if ($entity->setData(['staff_id' => $server_val,
+                                                   'user_id' => USERID])) {
+                    $entity->save();
+                } else {
+                    // TODO: handle errors
+                }
+            }
         }
 
-        if (!$sql_result = $sql_result->fetch_assoc()) {
+        $query = $this->entityFactory->query('oncore_staff_identifier', $id);
+        $query
+            ->addField('a.stop_date', 'stop_date')
+            ->addField('a.protocol_no', 'protocol_no')
+            ->join('redcap_entity_oncore_protocol_staff', 'a', 'e.staff_id = a.staff_id')
+            ->condition('e.user_id', USERID)
+            ->condition('protocol_no', $protocol_no)
+            ->execute();
+        $sql_result = array_values($query->getRawResults())[0];
+
+        if (!$sql_result && (SUPER_USER != 1)) {
             print_r("You are not authorized to access this data.");
             return;
         }
