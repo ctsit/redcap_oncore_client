@@ -1,5 +1,5 @@
 # REDCap OnCore Client
-This REDCap external module provides integration with Forte Research's OnCore. It allows REDCap project builders to associate a REDCap project with an OnCore protocol and import enrollment data into REDCap. It also allows developers to read data from OnCore via the SIP interface or the SOAP API.
+This REDCap external module provides integration with Forte Research's OnCore. It allows REDCap project builders to associate a REDCap project with an OnCore protocol and import enrollment data into REDCap. It also allows developers to read data from OnCore via the SIP interface, the SOAP API and UF's OCR API.
 
 ## Current Limitations
 
@@ -8,31 +8,47 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 ## Prerequisites
 - REDCap >= 8.7.0
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
-- [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.1.0
+- [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.3.0
 
+The UF OCR API for OnCore is recommended as it can provide access to protocols that are not yet enrolling.  This allows configuration and testing before a protocol starts enrolling subjects.
+
+## Easy installation
+- Install the _REDCap Entity_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Install the _REDCap OnCore Client_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enabled on a per-project basis after *Global Configuration* is completed.
 
 ## Manual Installation
 - Clone this repo into to `<redcap-root>/modules/redcap_oncore_client_v0.0.0`.
 - Clone [redcap_entity](https://github.com/ctsit/redcap_entity) repo into `<redcap-root>/modules/redcap_entity_v0.0.0`.
-- Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enable on a per-project basis.
+- Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enabled on a per-project basis after *Global Configuration* is completed.
 
 
 ## Global Configuration
-Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials.
+Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials and other details. Contact your site's OnCore team to get the URLs, usernames and passwords required to configure this module.
 
 - **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
 - **Login**: Your OnCore client user ID
 - **Password**: Your OnCore client password
-- **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or API) - _one_ of these is required to associate projects with protocols
+- **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or UF OCR API) - _one_ of these is required to associate projects with protocols
 - **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
-- **OCR API URL**: The URL of OnCore API (Application Programming Interface), e.g. `https://oncore-test.ahc.ufl.edu/ocr/api/protocols`. Returns **all** protocols, requires API credentials
-  - **OCR API Username**: Your OnCore API user name
-  - **OCR API Key**: Your OnCore API key
+- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://oncore-test.ahc.ufl.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
+  - **OCR API Username**: Your UF OCR OnCore API user name
+  - **OCR API Key**: Your UF OCR OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
+- **Name of server variable used to populate Institution ID**: If you use an authentication mechanism that provides the institutional ID in a server environment variable, name that variable here to automatically populate a table of user names and Institution IDs.
 
 ![Config form](img/config_form.png)
 
-You will also need to provide the institution ID (e.g. an 8 digit UFID) for each user for them to access the protocol data. This is available at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol.
+### Institutional IDs
+
+The REDCap OnCore Client displays enrollment data only to REDCap users who are on OnCore's list of protocol staff. To do this, it reads the protocol staff list from OnCore and compares the institional ID of the logged-in REDCap user against the institional ID field in the OnCore study staff data. If there is a match, it displays the enrollees, otherwise it hides them. Note that REDCap super-users can always see the list of enrollees. 
+
+To do the comparison, REDCap needs to know the institional ID for the logged-in user. If you use an authentication mechanism that provides the institutional ID in a server environment variable, the OnCore Client can automatically write that value to the lookup tables it uses to verify access. Sites that use Shibboleth or LDAP for authentication are likely to have this functionality, but its implementation is site-specific. Whether your site provides an institutional for successfully-authenticated staff and what variable would hold that value are questions for your site's system staff. 
+
+If the institutional ID is _not_ available in an environment variable, you will need to provide that ID for each user for them to access the protocol data. This is available at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol.
+
+Note that the institutional ID used on your site's OnCore system is a site-specific decision. It could be the same ID as the REDCap username or some other ID unique to each staff member. Ask your OnCore team which person identifier they store in the institutional ID field. 
+
 
 ## Project level configuration
 
