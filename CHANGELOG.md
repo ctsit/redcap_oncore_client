@@ -3,6 +3,15 @@ All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [2.1.0] - 2019-07-09
+### Added
+- Add 'Institutional IDs' section, etc. to README (Philip Chase)
+- Implement option to use a server variable to set users' staff_id (Kyle Chesney)
+
+### Changed
+- Replace entity SQL query strings with EntityQuery abstraction (Kyle Chesney)
+
+
 ## [2.0.0] - 2019-06-26
 ### Added
 - Add support for UF OCR API (Kyle Chesney)
