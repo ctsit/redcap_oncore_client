@@ -1,7 +1,7 @@
 {
     "name": "OnCore Client",
     "namespace": "OnCoreClient\\ExternalModule",
-    "description": "Provides integration with OnCore SIP and SOAP APIs to get protocol and enrollment data into REDCap. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
+    "description": "Provides integration with OnCore SIP, SOAP APIs, and UF's OCR API to get protocol and enrollment data into REDCap. <strong><a href=\"https://github.com/ctsit/redcap_oncore_client\">See full documentation here</a></strong>.",
     "permissions": [
         "redcap_every_page_top",
         "redcap_module_system_enable",
