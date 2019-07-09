@@ -45,7 +45,7 @@ The REDCap OnCore Client displays enrollment data only to REDCap users who are o
 
 To do the comparison, REDCap needs to know the institional ID for the logged-in user. If you use an authentication mechanism that provides the institutional ID in a server environment variable, the OnCore Client can automatically write that value to the lookup tables it uses to verify access. Sites that use Shibboleth or LDAP for authentication are likely to have this functionality, but its implementation is site-specific. Whether your site provides an institutional for successfully-authenticated staff and what variable would hold that value are questions for your site's system staff. 
 
-If the institutional ID is _not_ available in an environment variable, you will need to provide that ID for each user for them to access the protocol data. This is available at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol.
+If the institutional ID is _not_ available in an environment variable, you will need to provide that ID for each user for them to access the protocol data. This is available at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol or if they have Super User privileges.
 
 Note that the institutional ID used on your site's OnCore system is a site-specific decision. It could be the same ID as the REDCap username or some other ID unique to each staff member. Ask your OnCore team which person identifier they store in the institutional ID field. 
 
