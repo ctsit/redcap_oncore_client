@@ -115,6 +115,8 @@ class SubjectsDiffList extends EntityList {
 
         if ($this->rows) {
             include $this->module->getModulePath() . 'templates/table_legend.php';
+        } else {
+            print_r( "This protocol does not appear to have any enrollees yet.");
         }
     }
 
