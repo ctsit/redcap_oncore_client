@@ -26,12 +26,12 @@ The UF OCR API for OnCore, https://github.com/UF-OCR/ocr-api, is recommended as 
 ## Global Configuration
 Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials and other details. Contact your site's OnCore team to get the URLs, usernames and passwords required to configure this module.
 
-- **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
+- **WSDL**: The OnCore WSDL URL, e.g. `https://example.edu/opas/OpasService?wsdl`
 - **Login**: Your OnCore client user ID
 - **Password**: Your OnCore client password
 - **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or UF OCR API) - _one_ of these is required to associate projects with protocols
-- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
-- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://oncore-test.ahc.ufl.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
+- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://example.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
+- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://example.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
   - **OCR API Username**: Your UF OCR OnCore API user name
   - **OCR API Key**: Your UF OCR OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
