@@ -118,9 +118,33 @@
             "type": "checkbox"
         },
         {
+            "key": "use_custom_database",
+            "name": "Use REDCap or Entity database?",
+            "type": "radio",
+            "choices": [
+                {
+                    "value": "0",
+                    "name": "REDCap Database"
+                },
+                {
+                    "value": "1",
+                    "name": "Entity Database"
+                }
+            ]
+        },
+        {
+            "key": "autopopulate_staff_id",
+            "name": "Auto-populate Institution ID from server?</br>(warning, this will overwrite the value in your database)",
+            "type": "checkbox"
+        },
+        {
             "key": "staff_id_server_variable_name",
             "name": "Name of server variable used to populate Institution ID",
-            "type": "text"
+            "type": "text",
+            "branchingLogic": {
+                "field": "autopopulate_staff_id",
+                "value": true
+            }
         }
     ],
     "project-settings": [
