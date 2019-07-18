@@ -3,6 +3,14 @@ All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [2.2.0] - 2019-07-18
+### Added
+- Enable use of redcap user_inst_id or RCE db for institution id (Kyle Chesney)
+
+## Changed
+- Increase redcap-version-min to 9.0.1 (Philip Chase)
+
+
 ## [2.1.0] - 2019-07-09
 ### Added
 - Add 'Institutional IDs' section, etc. to README (Philip Chase)
