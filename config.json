@@ -30,7 +30,7 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "8.7.0"
+        "redcap-version-min": "9.0.1"
     },
     "system-settings": [
         {

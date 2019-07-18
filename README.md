@@ -6,7 +6,7 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 * Mapped fields are best configured as text fields with no validation in your REDCap project to prevent synchronization failures on that project.
 
 ## Prerequisites
-- REDCap >= 8.7.0
+- REDCap >= 9.0.1
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.3.0
 
