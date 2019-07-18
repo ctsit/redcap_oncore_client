@@ -49,7 +49,13 @@ class SubjectDiff extends Entity {
         $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
         }
 
-        Records::addNewRecordToCache($project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id);
+        // check version due to 9+ requring the $project_id parameter be set without a default
+        if ( (explode('.', REDCAP_VERSION)[0]) >= 9 ) {
+            Records::addNewRecordToCache($project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id);
+        } else {
+            Records::addNewRecordToCache($record = $record, $arm_id = $arm, $event_id = $event_id);
+        }
+
 
         $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
 

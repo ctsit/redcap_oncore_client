@@ -6,7 +6,7 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 * Mapped fields are best configured as text fields with no validation in your REDCap project to prevent synchronization failures on that project.
 
 ## Prerequisites
-- REDCap >= 8.7.0
+- REDCap >= 9.0.1
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.3.0
 
@@ -35,7 +35,9 @@ Go to **Control Center > External Modules**, click on OnCore Client's configure 
   - **OCR API Username**: Your UF OCR OnCore API user name
   - **OCR API Key**: Your UF OCR OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
-- **Name of server variable used to populate Institution ID**: If you use an authentication mechanism that provides the institutional ID in a server environment variable, name that variable here to automatically populate a table of user names and Institution IDs.
+- **Store User Institution IDs in REDCap User Attributes or Entity database?**: The Oncore client needs a user's Institutional ID to identify them in OnCore data. Choose whether this data will be stored in and read from REDCap's built-in attribute or in a side table managed by REDCap Entity.
+- **Auto-populate Institution ID from server?**: If you use an authentication mechanism that provides the institutional ID in a server environment variable, the OnCore Client can automatically write that value to the lookup tables it uses to verify access. Note that this feature will overwrite the storage location selected in _Store User Institution IDs in REDCap User Attributes or Entity database?_.
+- **Name of server variable used to populate Institution ID**: If you use the _Auto-populate Institution ID from server?_ feature, name the variable that holds the Institution ID here.
 
 ![Config form](img/config_form.png)
 
@@ -43,9 +45,11 @@ Go to **Control Center > External Modules**, click on OnCore Client's configure 
 
 The REDCap OnCore Client displays enrollment data only to REDCap users who are on OnCore's list of protocol staff. To do this, it reads the protocol staff list from OnCore and compares the institional ID of the logged-in REDCap user against the institional ID field in the OnCore study staff data. If there is a match, it displays the enrollees, otherwise it hides them. Note that REDCap super-users can always see the list of enrollees. 
 
-To do the comparison, REDCap needs to know the institional ID for the logged-in user. If you use an authentication mechanism that provides the institutional ID in a server environment variable, the OnCore Client can automatically write that value to the lookup tables it uses to verify access. Sites that use Shibboleth or LDAP for authentication are likely to have this functionality, but its implementation is site-specific. Whether your site provides an institutional for successfully-authenticated staff and what variable would hold that value are questions for your site's system staff. 
+To do the comparison, REDCap needs to know the institutional ID for the logged-in user. If you use an authentication mechanism that provides the institutional ID in a server environment variable, the OnCore Client can automatically write that value to the lookup tables it uses to verify access. Sites that use Shibboleth or LDAP for authentication are likely to have this functionality, but its implementation is site-specific. Whether your site provides an institutional for successfully-authenticated staff and what variable would hold that value are questions for your site's system staff.
 
-If the institutional ID is _not_ available in an environment variable, you will need to provide that ID for each user for them to access the protocol data. This is available at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol or if they have Super User privileges.
+Additionally, admins can configure the storage location the OnCore Client will use for the institutional ID. It can be read from REDCap's Institution ID field of the User Attributes or from a side table managed by the OnCore Client via REDCap Entity. If you already have the correct data in the REDCap User Attributes, just use that field. If you have other data in REDCap User Attributes, use the Entity database to store the Institutional ID. The auto-population feature can populate which every storage location you choose.
+
+If you are not using the auto-population feature, you will need to provide that ID for each user to allow them to access the protocol data. If you chose to store the Institution ID in the REDCap User Attributes, simply update that page. If you chose to use the Entity database, set the Institutional ID at **Control Center > Enter User Institution IDs**. Users will _only_ be allowed to access protocol subject data if OnCore lists them as currently active staff on a protocol or if they have Super User privileges.
 
 Note that the institutional ID used on your site's OnCore system is a site-specific decision. It could be the same ID as the REDCap username or some other ID unique to each staff member. Ask your OnCore team which person identifier they store in the institutional ID field. 
 
