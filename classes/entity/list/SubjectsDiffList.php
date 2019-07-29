@@ -247,6 +247,7 @@ class SubjectsDiffList extends EntityList {
                     "Erase all data",
                     "OnCore Subjects Diff rebuild"
                 )
+            AND project_id = \'' . PROJECT_ID . '\'
             ORDER BY log_event_id DESC LIMIT 1';
 
         $q = $this->module->query($sql);
