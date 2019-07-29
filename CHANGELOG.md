@@ -2,6 +2,10 @@
 All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.2.1] - 2019-07-29
+## Changed
+- Make isListUpdated check only the current project to avoid collisions with other users (Kyle Chesney)
+
 
 ## [2.2.0] - 2019-07-18
 ### Added
