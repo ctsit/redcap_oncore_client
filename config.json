@@ -221,6 +221,11 @@
                     "required": true
                 },
                 {
+                    "key": "sequence_number",
+                    "name": "SequenceNumber",
+                    "type": "field-list"
+                },
+                {
                     "key": "first_name",
                     "name": "FirstName",
                     "type": "field-list"

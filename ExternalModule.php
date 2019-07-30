@@ -430,11 +430,13 @@ class ExternalModule extends AbstractExternalModule {
                 continue;
             }
 
+            $complete_subject_data = array_merge((array) $subject->Subject, (array) $subject->OnStudyData);
+
             $data = [
                 'subject_id' => $subject->Subject->PrimaryIdentifier,
                 'protocol_no' => $result->ProtocolNo,
                 'status' => $status,
-                'data' => json_encode($subject->Subject),
+                'data' => json_encode($complete_subject_data),
             ];
 
             $factory->create('oncore_subject', $data);
@@ -558,7 +560,7 @@ class ExternalModule extends AbstractExternalModule {
                 $data = $data[$mappings['event_id']];
                 $diff = [];
 
-                $subject_data_array = json_decode(json_encode($subject_data), true);
+                $subject_data_array = json_decode(json_encode($subject_data), true); // needed for flattening nested properties
 
                 foreach ($mappings['mappings'] as $key => $field) {
                     $value = $this->digNestedData($subject_data_array, $key);
