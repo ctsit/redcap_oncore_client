@@ -46,7 +46,18 @@ class SubjectDiff extends Entity {
         $data = [];
 
         if (empty($record)) {
-        $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
+            $record = $mappings['PrimaryIdentifier'] == $table_pk ? $this->data['data']['PrimaryIdentifier'] : getAutoId();
+        }
+
+        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
+
+        // if a variable is mapped to the table primary key, reject the record if it is null
+        if ( $pk = array_search($table_pk, $mappings['mappings']) ) {
+            if ( empty(ExternalModule::digNestedData($remote_data_array, $pk)) ) {
+                $errmsg = "Record " . $remote_data->PrimaryIdentifier . " could not be loaded because " . $pk . " is blank";
+                StatusMessageQueue::enqueue($errmsg, $type = 'error');
+                return false;
+            }
         }
 
         // check version due to 9+ requring the $project_id parameter be set without a default
@@ -56,8 +67,6 @@ class SubjectDiff extends Entity {
             Records::addNewRecordToCache($record = $record, $arm_id = $arm, $event_id = $event_id);
         }
 
-
-        $remote_data_array = (json_decode(json_encode($remote_data), true)); // Converts nested objects to arrays
 
         foreach ($mappings['mappings'] as $key => $field) {
             $value = ExternalModule::digNestedData($remote_data_array, $key);
