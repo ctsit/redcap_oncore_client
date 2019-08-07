@@ -563,7 +563,7 @@ class ExternalModule extends AbstractExternalModule {
                 $subject_data_array = json_decode(json_encode($subject_data), true); // needed for flattening nested properties
 
                 foreach ($mappings['mappings'] as $key => $field) {
-                    $value = $this->digNestedData($subject_data_array, $key);
+                    $value = trim($this->digNestedData($subject_data_array, $key)); // trim to avoid erroneous diffs on _all_ values
                     if ($value === null) {
                         $value = '';
                     }
