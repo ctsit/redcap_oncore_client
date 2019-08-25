@@ -75,7 +75,7 @@ All that said, there is bug in the OnCore API that returns the ethnicity as a co
 | 15519 | Subject Refused    |
 | 3165  | Unknown            |
 
-If you want ethnicity data from OnCore todisplay with labels in REDCap, make ethnicity a radio button field with these codes:
+If you want ethnicity data from OnCore to display with labels in REDCap, make ethnicity a radio button field with these codes:
 
 ```
 3163,Hispanic or Latino
@@ -88,6 +88,11 @@ To prevent modification of fields that should be set by the OnCore Client, add t
 
 Note also that while the OnCore client supports non-longitudinal projects, the event name _must_ still be specified.
 
+## REDCap Record ID
+
+The OnCore Client will set a REDCap Record ID for any record it creates. If no field is mapped to Record ID in the field mapping, the OnCore Client will generate an automatic number incrementing the highest record ID in the system.
+
+You have the option of mapping any unique value in OnCore to the Record ID. If the SequenceNumber is set for each research subject in OnCore, it can be used to populate the Record ID. Note that uniqueness of the field mapped to Record ID is neither checked nor enforced by the OnCore Client.
 
 ## Synch OnCore subjects
 
