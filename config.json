@@ -319,11 +319,6 @@
                     ]
                 },
                 {
-                    "key": "id",
-                    "name": "id",
-                    "type": "field-list"
-                },
-                {
                     "key": "sequence_number",
                     "name": "SequenceNumber",
                     "type": "field-list"
