@@ -92,7 +92,7 @@ Note also that while the OnCore client supports non-longitudinal projects, the e
 
 The OnCore Client will set a REDCap Record ID for any record it creates. If no field is mapped to Record ID in the field mapping, the OnCore Client will generate an automatic number incrementing the highest record ID in the system.
 
-You have the option of mapping any unique value in OnCore to the Record ID. If the SequenceNumber is set for each research subject in OnCore, it can be used to populate the Record ID. Note that uniqueness of the field mapped to Record ID is neither checked nor enforced by the OnCore Client.
+You have the option of mapping any field in OnCore to REDCap's Record ID. Note that when mapping OnCore fields to Record ID, REDCap records will be **overwritten** if a field contains a non-unique value or rejected if a field contains no data; uniqueness of the field mapped to Record ID is **neither checked nor enforced** by the OnCore Client. You are expected to use a field with unique values (a good option is SequenceNumber _if it is provided for every subject_).
 
 ## Synch OnCore subjects
 
