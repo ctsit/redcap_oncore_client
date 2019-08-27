@@ -317,6 +317,11 @@
                             "type": "field-list"
                         }
                     ]
+                },
+                {
+                    "key": "sequence_number",
+                    "name": "SequenceNumber",
+                    "type": "field-list"
                 }
             ]
         }
