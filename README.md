@@ -10,7 +10,7 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.3.0
 
-The UF OCR API for OnCore, https://github.com/UF-OCR/ocr-api, is recommended as it can provide access to protocols that are not yet enrolling. This allows configuration and testing before a protocol starts enrolling subjects. The `ocr-api` must be deployed as a service within the OnCore infrastructure. For detials on how to do this see https://github.com/UF-OCR/ocr-api.
+The UF OCR API for OnCore, https://github.com/UF-OCR/ocr-api, is recommended as it can provide access to protocols that are not yet enrolling. This allows configuration and testing before a protocol starts enrolling subjects. The `ocr-api` must be deployed as a service within the OnCore infrastructure. For details on how to do this see https://github.com/UF-OCR/ocr-api.
 
 ## Easy installation
 - Install the _REDCap Entity_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
