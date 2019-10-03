@@ -13,8 +13,8 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 The UF OCR API for OnCore, https://github.com/UF-OCR/ocr-api, is recommended as it can provide access to protocols that are not yet enrolling. This allows configuration and testing before a protocol starts enrolling subjects. The `ocr-api` must be deployed as a service within the OnCore infrastructure. For details on how to do this see https://github.com/UF-OCR/ocr-api.
 
 ## Easy installation
-- Install the _REDCap Entity_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
-- Install the _REDCap OnCore Client_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Install the _REDCap Entity_ module from the Consortium [REDCap Repo](https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Install the _REDCap OnCore Client_ module from the Consortium [REDCap Repo](https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
 - Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enabled on a per-project basis after *Global Configuration* is completed.
 
 ## Manual Installation
