@@ -10,11 +10,11 @@ This REDCap external module provides integration with Forte Research's OnCore. I
 - [PHP SOAP](http://php.net/manual/en/book.soap.php)
 - [REDCap Entity](https://github.com/ctsit/redcap_entity) >= 2.3.0
 
-The UF OCR API for OnCore is recommended as it can provide access to protocols that are not yet enrolling.  This allows configuration and testing before a protocol starts enrolling subjects.
+The UF OCR API for OnCore, https://github.com/UF-OCR/ocr-api, is recommended as it can provide access to protocols that are not yet enrolling. This allows configuration and testing before a protocol starts enrolling subjects. The `ocr-api` must be deployed as a service within the OnCore infrastructure. For details on how to do this see https://github.com/UF-OCR/ocr-api.
 
 ## Easy installation
-- Install the _REDCap Entity_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
-- Install the _REDCap OnCore Client_ module from the Consortium [REDCap Repo] (https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Install the _REDCap Entity_ module from the Consortium [REDCap Repo](https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
+- Install the _REDCap OnCore Client_ module from the Consortium [REDCap Repo](https://redcap.vanderbilt.edu/consortium/modules/index.php) from the control center.
 - Go to **Control Center > External Modules**, enable REDCap Entity, and then OnCore Client. REDCap Entity will be enabled globally, but the OnCore client has to be enabled on a per-project basis after *Global Configuration* is completed.
 
 ## Manual Installation
@@ -26,12 +26,12 @@ The UF OCR API for OnCore is recommended as it can provide access to protocols t
 ## Global Configuration
 Go to **Control Center > External Modules**, click on OnCore Client's configure button, and fill the configuration form with your credentials and other details. Contact your site's OnCore team to get the URLs, usernames and passwords required to configure this module.
 
-- **WSDL**: The OnCore WSDL URL, e.g. `https://oncore-test.ahc.ufl.edu/opas/OpasService?wsdl`
+- **WSDL**: The OnCore WSDL URL, e.g. `https://example.edu/opas/OpasService?wsdl`
 - **Login**: Your OnCore client user ID
 - **Password**: Your OnCore client password
 - **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or UF OCR API) - _one_ of these is required to associate projects with protocols
-- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://oncore-test.ahc.ufl.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
-- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://oncore-test.ahc.ufl.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
+- **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://example.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
+- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://example.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
   - **OCR API Username**: Your UF OCR OnCore API user name
   - **OCR API Key**: Your UF OCR OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing

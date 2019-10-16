@@ -2,18 +2,26 @@
 All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [2.3.1] - 2019-10-16
+### Changed
+- Fix typos in README and Changelog (Kyle Chesney, Philip Chase)
+- Switch README to 'example.edu' host names (Philip Chase)
+- Add link to the ocr api git repo (Philip Chase)
+
+
 ## [2.3.0] - 2019-08-27
-## Added
+### Added
 - Add 'REDCap Record ID' section to README.md (Philip Chase)
 - enable access to SequenceNumber (Kyle Chesney)
 
-## Changed
+### Changed
 - trim values on fetch so diff won't flag whitespace (Kyle Chesney)
 - preemptively reject data that would cause null table primary keys (Kyle Chesney)
 
 
 ## [2.2.1] - 2019-07-29
-## Changed
+### Changed
 - Make isListUpdated check only the current project to avoid collisions with other users (Kyle Chesney)
 
 
@@ -21,7 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Enable use of redcap user_inst_id or RCE db for institution id (Kyle Chesney)
 
-## Changed
+### Changed
 - Increase redcap-version-min to 9.0.1 (Philip Chase)
 
 
