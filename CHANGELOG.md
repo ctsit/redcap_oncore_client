@@ -2,6 +2,14 @@
 All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [2.3.1] - 2019-10-16
+### Changed
+- Fix typos in README and Changelog (Kyle Chesney, Philip Chase)
+- Switch README to 'example.edu' host names (Philip Chase)
+- Add link to the ocr api git repo (Philip Chase)
+
+
 ## [2.3.0] - 2019-08-27
 ### Added
 - Add 'REDCap Record ID' section to README.md (Philip Chase)
