@@ -8,12 +8,15 @@ use SoapClient;
  *
  * Avoids "looks like we got no XML document" errors due to BOM.
  *
- * @see https://www.mikemackintosh.com/fix-soap-exception-looks-like-we-got-no-xml-document/
  */
 class OnCoreSoapClient extends SoapClient {
-    public function __doRequest($req, $location, $action, $version = SOAP_1_1) {
-        $response = explode("\r\n", parent::__doRequest($req, $location, $action, $version));
-        $response = preg_replace('/^(\x00\x00\xFE\xFF|\xFF\xFE\x00\x00|\xFE\xFF|\xFF\xFE|\xEF\xBB\xBF)/', '', $response[5]);
-        return $response;
+    public function __doRequest($req, $location, $action, $version = SOAP_1_1, $one_way=0) {
+        $response = parent::__doRequest($req, $location, $action, $version, $one_way);
+        if (!$response) {
+            return $response;
+        }
+        $soap_result = array();
+        preg_match('/<soap:Envelope.*<\/soap:Envelope>/s', $response, $soap_result);
+        return $soap_result[0];
     }
 }

@@ -44,7 +44,7 @@ class OnCoreClient {
      */
     function setClient($wsdl, $login, $password) {
         $options = array(
-            'location' => $wsdl,
+            'location' => str_replace('?wsdl','',$wsdl),
             'login' => $login,
             'password' => $password,
             'trace' => 1,
