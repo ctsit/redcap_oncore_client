@@ -3,6 +3,11 @@ All notable changes to the OnCore Client module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [2.3.2] - 2019-11-22
+### Changed
+- Adapt to SOAP services in OnCore 16.0 (#46) (Harshita Koranne)
+
+
 ## [2.3.1] - 2019-10-16
 ### Changed
 - Fix typos in README and Changelog (Kyle Chesney, Philip Chase)
