@@ -1,4 +1,7 @@
 # REDCap OnCore Client
+
+[![DOI](https://zenodo.org/badge/115017273.svg)](https://zenodo.org/badge/latestdoi/115017273)
+
 This REDCap external module provides integration with Forte Research's OnCore. It allows REDCap project builders to associate a REDCap project with an OnCore protocol and import enrollment data into REDCap. It also allows users to select protocols via either the SIP interface or UF's OCR API, and read protocol data from OnCore via the SOAP API.
 
 ## Current Limitations
