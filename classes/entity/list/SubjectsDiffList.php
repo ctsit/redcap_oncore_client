@@ -236,8 +236,9 @@ class SubjectsDiffList extends EntityList {
     }
 
     protected function isListUpdated() {
+        $log_event_table = method_exists('\REDCap', 'getLogEventTable') ? \REDCap::getLogEventTable($project_id) : "redcap_log_event";
         $sql = '
-            SELECT description FROM redcap_log_event
+            SELECT description FROM ' . $redcap_log_event . '
             WHERE
                 description IN (
                     "Create record",
