@@ -229,6 +229,17 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        $types['oncore_summary_accrual'] = [
+            'label' => 'OnCore SA Result',
+            'label_plural' => 'OnCore SA Results',
+            'properties' => [
+                'data' => [
+                    'name' => 'Data',
+                    'type' => 'json',
+                ],
+            ],
+        ];
+
         return $types;
     }
 
@@ -242,6 +253,17 @@ class ExternalModule extends AbstractExternalModule {
         $log_enabled = $this->getSystemSetting('log_enabled');
 
         return new OnCoreClient($wsdl, $login, $password, $log_enabled);
+    }
+
+    /***
+     * Instantiates a GuzzleHttp Client, parameterized with configuration data
+     */
+    function getHttpClient() {
+        $login = $this->getSystemSetting('login');
+        $password = $this->getSystemSetting('password');
+        $log_enabled = $this->getSystemSetting('log_enabled');
+
+        return new OnCoreClient(null, $login, $password, $log_enabled, $use_soap = false);
     }
 
     function initSubjectsMetadata() {
@@ -367,13 +389,11 @@ class ExternalModule extends AbstractExternalModule {
                 'x-api-user: ' . $user
             ];
 
+            // TODO: replace with GuzzleHttp Client
             $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_URL, "$url/protocols");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-            $client = $this->getSoapClient();
 
             if ($result = json_decode(curl_exec($ch))) {
                 foreach ($result->protocols as $no => $code){
@@ -707,6 +727,7 @@ class ExternalModule extends AbstractExternalModule {
 
         return $output;
     }
+
     function digNestedData($subject_data_array, $key) {
         $value = null;
         if (property_exists($subject_data_array, $key)) {
@@ -724,4 +745,105 @@ class ExternalModule extends AbstractExternalModule {
 
         return $value;
     }
+
+    function testProtocol() {
+        $client = $this->getHttpClient();
+
+        $protocol_no = $this->getProjectSetting('protocol_no');
+        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/validateProtocol/$protocol_no";
+
+        $response = $client->httpRequest('GET', $endpoint);
+
+        if (!$response) {
+            StatusMessageQueue::enqueue('Your summary accrual credentials are invalid; please notify an administator.', 'error');
+            return;
+        }
+
+        $response = json_decode($response->getBody()->getContents(), true);
+        if (!$response['accrual_info_only']) {
+            StatusMessageQueue::enqueue('This protocol is not available for summary accrual upload.', 'error');
+            return;
+        }
+
+        return true;
+    }
+
+    function sendSummaryAccrualData() {
+        if (!$this->testProtocol()) {
+            return;
+        }
+
+        $subjects = $this->gatherSummaryAccrualData();
+
+        // TODO: consider parsing subjects
+        $total_accruals = count($subjects);
+        $post_data = [
+                "credentials" => [
+                    "username" => $this->getSystemSetting('login'),
+                    "password" => $this->getSystemSetting('password'),
+                ],
+                "protocol_no" => $this->getProjectSetting('protocol_no'),
+                "accrual_data" => $subjects
+        ];
+
+        $client = $this->getHttpClient();
+        $protocol_no = $this->getProjectSetting('protocol_no');
+        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/accruals";
+
+        //TODO: parse response, store response in an entity object
+        $response = $client->httpRequest('POST', $endpoint, $post_data);
+        if (!$response) {
+            StatusMessageQueue::enqueue('There is a problem in the formatting of the summary accrual data. Please contact an administrator.', 'error');
+            return;
+        }
+        $response = $response->getBody()->getContents();
+
+        $response = json_decode($response, true);
+        $errors = count($response['error_records']);
+
+        $type =
+            $errors == 0 ? 'success' :
+            ($errors < $total_accruals ? 'warning' :
+            ($errors == $total_accruals ? 'error' :
+            null));
+
+        StatusMessageQueue::enqueue("Successfully sent " . ($total_accruals - $errors) . " / $total_accruals records", $type);
+    }
+
+    function gatherSummaryAccrualData() {
+        $using_template = $this->getProjectSetting('using_sa_template');
+
+        // TODO: make configurable on the plugin page
+        // TODO: add unique identifier, e.g. record ID
+        if ($using_template) {
+            $mappings = [
+                "onstudydate" => "On Study Date*",
+                "gender" => "Gender",
+                //TODO: institution
+                "race" => "Race",
+                "ethnicity" => "Ethnicity"
+            ];
+        }
+        $mapping_keys = array_keys($mappings);
+
+        // pull only relevant fields
+        $data = REDCap::getData(PROJECT_ID, 'array', null, $mapping_keys);
+
+        $i = 0;
+        $subjects = [];
+        foreach($data as $record) {
+            $subject = [];
+            if ($using_template) {
+                $datum = array_shift($record);
+            }
+
+            foreach($datum as $k => $v) {
+                $subject[$mappings[$k]] = $v;
+            }
+            $subjects[$i++] = $subject;
+        }
+
+        return $subjects;
+    }
+
 }

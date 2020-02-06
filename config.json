@@ -162,6 +162,11 @@
             ]
         },
         {
+            "key": "using_sa_template",
+            "name": "Using a Summary Accrual Template?",
+            "type": "checkbox"
+        },
+        {
             "key": "valid_statuses",
             "name": "Pull subjects having the following statuses",
             "type": "sub_settings",
@@ -344,6 +349,11 @@
                 "name": "Pull OnCore Subjects",
                 "icon": "arrow_rotate_clockwise",
                 "url": "plugins/subjects_pull.php"
+            },
+            {
+                "name": "Upload Summary Accrual",
+                "icon": "arrow_up",
+                "url": "plugins/summary_accrual_upload.php"
             }
         ]
     }

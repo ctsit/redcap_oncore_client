@@ -9,6 +9,7 @@ namespace OnCoreClient;
 use OncoreClient\OnCoreSoapClient;
 use REDCapEntity\EntityFactory;
 use SoapFault;
+use GuzzleHttp;
 
 require_once 'OnCoreSoapClient.php';
 
@@ -19,14 +20,19 @@ class OnCoreClient {
     protected $client;
     protected $handlers = array();
     protected $logEnabled;
+    protected $use_soap;
+    protected $auth;
 
     /**
      * Constructor.
      */
-    function __construct($wsdl, $login, $password, $log_enabled = false) {
+    function __construct($wsdl, $login, $password, $log_enabled = false, $use_soap = true) {
+        $this->use_soap = $use_soap;
         $this->includeHandlers();
         $this->setClient($wsdl, $login, $password);
-        $this->setHandlers();
+        if ($use_soap) {
+            $this->setHandlers();
+        }
         $this->logEnabled = $log_enabled;
     }
 
@@ -43,15 +49,21 @@ class OnCoreClient {
      * Sets up a new SOAP client.
      */
     function setClient($wsdl, $login, $password) {
-        $options = array(
-            'location' => str_replace('?wsdl','',$wsdl),
-            'login' => $login,
-            'password' => $password,
-            'trace' => 1,
-            'exceptions' => true,
-        );
 
-        $this->client = new OnCoreSoapClient($wsdl, $options);
+        if ($this->use_soap) {
+            $options = array(
+                    'location' => str_replace('?wsdl','',$wsdl),
+                    'login' => $login,
+                    'password' => $password,
+                    'trace' => 1,
+                    'exceptions' => true,
+                    );
+            $this->client = new OnCoreSoapClient($wsdl, $options);
+        }
+        else {
+            $this->client = new GuzzleHttp\Client();
+            $this->auth = [$login, $password];
+        }
     }
 
     /**
@@ -136,5 +148,21 @@ class OnCoreClient {
      */
     function getOperationHandlerClass($op) {
         return isset($this->handlers[$op]) ? $this->handlers[$op] : false;
+    }
+
+    function httpRequest($method, $endpoint, $args = false) {
+        try {
+            if (!$args) {
+                $result = $this->client->request($method, $endpoint, ['auth' => $this->auth]);
+            }
+            else {
+                $result = $this->client->request($method, $endpoint, ['json' => $args]);
+            }
+        } catch(GuzzleHttp\Exception\ClientException $e) {
+            // TODO: handle specific errors
+            //GuzzleHttp\Psr7\str($e->getResponse());
+            return false;
+        }
+        return $result;
     }
 }
