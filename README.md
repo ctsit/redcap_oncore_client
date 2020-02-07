@@ -34,7 +34,7 @@ Go to **Control Center > External Modules**, click on OnCore Client's configure 
 - **Password**: Your OnCore client password
 - **Protocol lookup method**: The method through which protocols are acquired from OnCore (SIP or UF OCR API) - _one_ of these is required to associate projects with protocols
 - **SIP URL**: The URL of OnCore SIP (Study Information Portal), e.g. `https://example.edu/sip/SIPMain`. Returns **only** protocols open to enrollment
-- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://example.edu/ocr/api/protocols`. Returns **all** protocols, requires UF OCR API credentials
+- **OCR API URL**: The URL of UF OCR OnCore API (Application Programming Interface), e.g. `https://example.edu/ocr/api`. Returns **all** protocols, requires UF OCR API credentials
   - **OCR API Username**: Your UF OCR OnCore API user name
   - **OCR API Key**: Your UF OCR OnCore API key
 - **Log requests**: Check this field to log all API requests (see Logs Page section) - this is useful for development purposes and testing
