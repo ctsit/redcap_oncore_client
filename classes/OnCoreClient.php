@@ -22,17 +22,15 @@ class OnCoreClient {
     protected $logEnabled;
     protected $use_soap;
     protected $auth;
+    protected $base_uri;
 
     /**
      * Constructor.
      */
-    function __construct($wsdl, $login, $password, $log_enabled = false, $use_soap = true) {
+    function __construct($wsdl, $login, $password, $log_enabled = false, $use_soap = true, $base_uri = null) {
         $this->use_soap = $use_soap;
-        $this->includeHandlers();
+        $this->base_uri = $base_uri;
         $this->setClient($wsdl, $login, $password);
-        if ($use_soap) {
-            $this->setHandlers();
-        }
         $this->logEnabled = $log_enabled;
     }
 
@@ -46,28 +44,46 @@ class OnCoreClient {
     }
 
     /**
-     * Sets up a new SOAP client.
+     * Sets up a new SOAP or HTTP client.
      */
     function setClient($wsdl, $login, $password) {
 
         if ($this->use_soap) {
-            $options = array(
-                    'location' => str_replace('?wsdl','',$wsdl),
-                    'login' => $login,
-                    'password' => $password,
-                    'trace' => 1,
-                    'exceptions' => true,
-                    );
-            $this->client = new OnCoreSoapClient($wsdl, $options);
+            $this->setSoapClient($wsdl, $login, $password);
         }
         else {
-            $this->client = new GuzzleHttp\Client();
-            $this->auth = [$login, $password];
+            $this->setHttpClient($login, $password);
         }
     }
 
+    private function setSoapClient($wsdl, $login, $password) {
+        $this->includeHandlers();
+
+        $options = array(
+                'location' => str_replace('?wsdl','',$wsdl),
+                'login' => $login,
+                'password' => $password,
+                'trace' => 1,
+                'exceptions' => true,
+                );
+        $this->client = new OnCoreSoapClient($wsdl, $options);
+
+        $this->setHandlers();
+    }
+
+    private function setHttpClient($login, $password, $base_uri = null) {
+        // Add a trailing slash if the base_uri if it does not already have one
+        if ( substr_compare('/', $this->base_uri, -strlen($this->base_uri)) !== 0 ) {
+            $this->base_uri .= '/';
+        }
+        $this->client = new GuzzleHttp\Client([
+                'base_uri' => $this->base_uri
+        ]);
+        $this->auth = [$login, $password];
+    }
+
     /**
-     * Sets up association between API operations and handler classes.
+     * Sets up association between SOAP API operations and handler classes.
      */
     function setHandlers() {
         // Getting services available from WSDL and assigning each one of them
@@ -87,7 +103,7 @@ class OnCoreClient {
     }
 
     /**
-     * Performs an API request.
+     * Performs a SOAP API request.
      */
     function request($op, $data) {
         if (!defined('PROJECT_ID')) {
@@ -150,14 +166,12 @@ class OnCoreClient {
         return isset($this->handlers[$op]) ? $this->handlers[$op] : false;
     }
 
-    function httpRequest($method, $endpoint, $args = false) {
+    function httpRequest($method, $endpoint, $args = [], $use_basic_auth = false) {
         try {
-            if (!$args) {
-                $result = $this->client->request($method, $endpoint, ['auth' => $this->auth]);
+            if ($use_basic_auth) {
+                $args['auth'] = $this->auth;
             }
-            else {
-                $result = $this->client->request($method, $endpoint, ['json' => $args]);
-            }
+            $result = $this->client->request($method, $endpoint, $args);
         } catch(GuzzleHttp\Exception\ClientException $e) {
             // TODO: handle specific errors
             //GuzzleHttp\Psr7\str($e->getResponse());

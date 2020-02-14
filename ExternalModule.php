@@ -255,15 +255,16 @@ class ExternalModule extends AbstractExternalModule {
         return new OnCoreClient($wsdl, $login, $password, $log_enabled);
     }
 
-    /***
+    /**
      * Instantiates a GuzzleHttp Client, parameterized with configuration data
      */
     function getHttpClient() {
         $login = $this->getSystemSetting('login');
         $password = $this->getSystemSetting('password');
         $log_enabled = $this->getSystemSetting('log_enabled');
+        $base_uri = $this->getSystemSetting('ocr_api_url');
 
-        return new OnCoreClient(null, $login, $password, $log_enabled, $use_soap = false);
+        return new OnCoreClient(null, $login, $password, $log_enabled, $use_soap = false, $base_uri);
     }
 
     function initSubjectsMetadata() {
@@ -385,17 +386,14 @@ class ExternalModule extends AbstractExternalModule {
             }
 
             $headers = [
-                'x-api-key: ' . $api_key,
-                'x-api-user: ' . $user
+                'x-api-key' => $api_key,
+                'x-api-user' => $user
             ];
 
-            // TODO: replace with GuzzleHttp Client
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "$url/protocols");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            $client = $this->getHttpClient();
+            $result = $client->httpRequest('GET', 'protocols', ['headers' => $headers]);
 
-            if ($result = json_decode(curl_exec($ch))) {
+            if ($result = json_decode($result->getBody()->getContents())) {
                 foreach ($result->protocols as $no => $code){
                     $protocol = $code[0];
                     $title = $code[1];
@@ -404,7 +402,7 @@ class ExternalModule extends AbstractExternalModule {
 
                 $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
-            curl_close($ch);
+            //curl_close($ch);
 
         }
 
@@ -750,9 +748,9 @@ class ExternalModule extends AbstractExternalModule {
         $client = $this->getHttpClient();
 
         $protocol_no = $this->getProjectSetting('protocol_no');
-        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/validateProtocol/$protocol_no";
+        $endpoint = "oncore/validateProtocol/$protocol_no";
 
-        $response = $client->httpRequest('GET', $endpoint);
+        $response = $client->httpRequest('GET', $endpoint, [], true);
 
         if (!$response) {
             StatusMessageQueue::enqueue('Your summary accrual credentials are invalid; please notify an administator.', 'error');
@@ -788,10 +786,10 @@ class ExternalModule extends AbstractExternalModule {
 
         $client = $this->getHttpClient();
         $protocol_no = $this->getProjectSetting('protocol_no');
-        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/accruals";
+        $endpoint = "oncore/accruals";
 
         //TODO: parse response, store response in an entity object
-        $response = $client->httpRequest('POST', $endpoint, $post_data);
+        $response = $client->httpRequest('POST', $endpoint, ['json' => $post_data]);
         if (!$response) {
             StatusMessageQueue::enqueue('There is a problem in the formatting of the summary accrual data. Please contact an administrator.', 'error');
             return;
