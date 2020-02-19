@@ -144,6 +144,7 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        // TODO: make room for Summary Accrual logs
         $types['oncore_api_log'] = [
             'label' => 'OnCore API Log',
             'label_plural' => 'OnCore API Logs',
@@ -229,10 +230,31 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        // TODO: create a new entity for mapping config, integrate with this
         $types['oncore_summary_accrual'] = [
             'label' => 'OnCore SA Result',
             'label_plural' => 'OnCore SA Results',
+            'special_keys' => [
+                'project' => 'project_id',
+                'author' => 'configuring_user'
+            ],
             'properties' => [
+                'project_id' => [
+                    'name' => 'Project ID',
+                    'type' => 'project',
+                    'required' => true,
+                ],
+                'protocol_no' => [
+                    'name' => 'Protocol Number',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                // TODO: move this to a mapping entity, refer to by PK
+                'configuring_user' => [
+                    'name' => 'Configurer',
+                    'type' => 'user',
+                    'required' => true,
+                ],
                 'data' => [
                     'name' => 'Data',
                     'type' => 'json',
@@ -766,8 +788,58 @@ class ExternalModule extends AbstractExternalModule {
         return true;
     }
 
-    function sendSummaryAccrualData() {
+    function sendSummaryAccrualData($user = null) {
+        // TODO: Abstract this to make it suitable for a cron job
+        global $project_contact_email;
+
+        $protocol_no = $this->getProjectSetting('protocol_no');
+        if (!$user) {
+            $user = $this->framework->getUser();
+        }
+        // Initialize logging
+        $log_data = [
+            'protocol_no' => $protocol_no,
+            'configuring_user' => $user->username,
+            'data' => null
+        ];
+        $factory = new EntityFactory();
+
+        // Initialize email alert
+        $cc = [$project_contact_email];
+        $Project = $this->framework->getProject();
+        $users = $Project->getUsers();
+        // cc all users with design rights
+        foreach ($users as $user) {
+            if ($user->hasDesignRights()) {
+                array_push($cc, $user->getEmail());
+            }
+        }
+
+        $project_id = PROJECT_ID;
+        $plugin_page_link = APP_URL_EXTMOD .
+        "?prefix=redcap_oncore_client&page=plugins%2Fsummary_accrual_upload&pid=$project_id";
+        $email_body = 'There was an issue sending your OnCore Summary Accrual data. Please go visit</br>' . $plugin_page_link;
+        $email_info = [
+            'to' => $user->getEmail(),
+            'cc' => $cc,
+            'subject' => 'REDCap OnCore Summary Accrual Notice',
+            'sender' => 'please-do-not-reply@ufl.edu',
+            'body' => $email_body,
+            ];
+
+        // cc project owner if there is one
+        $project_owner = array_pop( // there should only be 1 entity object per project
+                $factory->query('project_ownership')
+                ->condition('pid', $project_id)
+                ->execute()
+                )
+            ->getData()
+            ['username'];
+        if ($project_owner) array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+
         if (!$this->testProtocol()) {
+            $log_data['data'] = json_encode('Protocol not open to summary accruals.');
+            $factory->create('oncore_summary_accrual', $log_data);
             return;
         }
 
@@ -780,21 +852,24 @@ class ExternalModule extends AbstractExternalModule {
                     "username" => $this->getSystemSetting('login'),
                     "password" => $this->getSystemSetting('password'),
                 ],
-                "protocol_no" => $this->getProjectSetting('protocol_no'),
+                "protocol_no" => $protocol_no,
                 "accrual_data" => $subjects
         ];
 
         $client = $this->getHttpClient();
-        $protocol_no = $this->getProjectSetting('protocol_no');
         $endpoint = "oncore/accruals";
 
-        //TODO: parse response, store response in an entity object
         $response = $client->httpRequest('POST', $endpoint, ['json' => $post_data]);
         if (!$response) {
             StatusMessageQueue::enqueue('There is a problem in the formatting of the summary accrual data. Please contact an administrator.', 'error');
+            $log_data['data'] = json_encode('Unknown data formatting error.');
+            $factory->create('oncore_summary_accrual', $log_data);
+            $this->send_email($email_info);
             return;
         }
         $response = $response->getBody()->getContents();
+
+        $log_data['data'] = $response;
 
         $response = json_decode($response, true);
         $errors = count($response['error_records']);
@@ -806,6 +881,10 @@ class ExternalModule extends AbstractExternalModule {
             null));
 
         StatusMessageQueue::enqueue("Successfully sent " . ($total_accruals - $errors) . " / $total_accruals records", $type);
+
+        if ($type == 'error') $this->send_email($email_info);
+
+        $factory->create('oncore_summary_accrual', $log_data);
     }
 
     function gatherSummaryAccrualData() {
@@ -842,6 +921,17 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         return $subjects;
+    }
+
+    function sendEmail($email_info) {
+		$to = $email_info['to'];
+        $sender = $email_info['sender'];
+		$subject = $email_info['subject'];
+		$body = $email_info['body'];
+        $cc = $email_info['cc'] ? implode(',', $email_info['cc']) : '';
+
+		$success = REDCap::email($to, $sender, $subject, $body, $cc);
+		return $success;
     }
 
 }
