@@ -7,6 +7,7 @@
         "redcap_module_system_enable",
         "redcap_module_system_disable"
     ],
+    "framework-version": 3,
     "authors": [
         {
             "name": "Tiago Bember",
@@ -335,24 +336,24 @@
         "control-center": [
             {
                 "name": "OnCore API Logs",
-                "icon": "report",
+                "icon": "fas fa-receipt",
                 "url": "plugins/api_logs.php"
             },
             {
                 "name": "Enter User Institution IDs",
-                "icon": "group_gear",
+                "icon": "fas fa-users-cog",
                 "url": "plugins/oncore_staff_identifier_entry.php"
             }
         ],
         "project": [
             {
                 "name": "Pull OnCore Subjects",
-                "icon": "arrow_rotate_clockwise",
+                "icon": "fas fa-cloud-download-alt",
                 "url": "plugins/subjects_pull.php"
             },
             {
                 "name": "Upload Summary Accrual",
-                "icon": "arrow_up",
+                "icon": "fas fa-cloud-upload-alt",
                 "url": "plugins/summary_accrual_upload.php"
             }
         ]

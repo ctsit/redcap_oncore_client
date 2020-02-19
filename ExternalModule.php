@@ -144,6 +144,7 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        // TODO: make room for Summary Accrual logs
         $types['oncore_api_log'] = [
             'label' => 'OnCore API Log',
             'label_plural' => 'OnCore API Logs',
@@ -229,10 +230,31 @@ class ExternalModule extends AbstractExternalModule {
             ],
         ];
 
+        // TODO: create a new entity for mapping config, integrate with this
         $types['oncore_summary_accrual'] = [
             'label' => 'OnCore SA Result',
             'label_plural' => 'OnCore SA Results',
+            'special_keys' => [
+                'project' => 'project_id',
+                'author' => 'configuring_user'
+            ],
             'properties' => [
+                'project_id' => [
+                    'name' => 'Project ID',
+                    'type' => 'project',
+                    'required' => true,
+                ],
+                'protocol_no' => [
+                    'name' => 'Protocol Number',
+                    'type' => 'text',
+                    'required' => true,
+                ],
+                // TODO: move this to a mapping entity, refer to by PK
+                'configuring_user' => [
+                    'name' => 'Configurer',
+                    'type' => 'user',
+                    'required' => true,
+                ],
                 'data' => [
                     'name' => 'Data',
                     'type' => 'json',
@@ -255,15 +277,16 @@ class ExternalModule extends AbstractExternalModule {
         return new OnCoreClient($wsdl, $login, $password, $log_enabled);
     }
 
-    /***
+    /**
      * Instantiates a GuzzleHttp Client, parameterized with configuration data
      */
     function getHttpClient() {
         $login = $this->getSystemSetting('login');
         $password = $this->getSystemSetting('password');
         $log_enabled = $this->getSystemSetting('log_enabled');
+        $base_uri = $this->getSystemSetting('ocr_api_url');
 
-        return new OnCoreClient(null, $login, $password, $log_enabled, $use_soap = false);
+        return new OnCoreClient(null, $login, $password, $log_enabled, $use_soap = false, $base_uri);
     }
 
     function initSubjectsMetadata() {
@@ -385,17 +408,14 @@ class ExternalModule extends AbstractExternalModule {
             }
 
             $headers = [
-                'x-api-key: ' . $api_key,
-                'x-api-user: ' . $user
+                'x-api-key' => $api_key,
+                'x-api-user' => $user
             ];
 
-            // TODO: replace with GuzzleHttp Client
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "$url/protocols");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            $client = $this->getHttpClient();
+            $result = $client->httpRequest('GET', 'protocols', ['headers' => $headers]);
 
-            if ($result = json_decode(curl_exec($ch))) {
+            if ($result = json_decode($result->getBody()->getContents())) {
                 foreach ($result->protocols as $no => $code){
                     $protocol = $code[0];
                     $title = $code[1];
@@ -404,7 +424,6 @@ class ExternalModule extends AbstractExternalModule {
 
                 $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
-            curl_close($ch);
 
         }
 
@@ -750,9 +769,9 @@ class ExternalModule extends AbstractExternalModule {
         $client = $this->getHttpClient();
 
         $protocol_no = $this->getProjectSetting('protocol_no');
-        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/validateProtocol/$protocol_no";
+        $endpoint = "oncore/validateProtocol/$protocol_no";
 
-        $response = $client->httpRequest('GET', $endpoint);
+        $response = $client->httpRequest('GET', $endpoint, [], true);
 
         if (!$response) {
             StatusMessageQueue::enqueue('Your summary accrual credentials are invalid; please notify an administator.', 'error');
@@ -768,8 +787,70 @@ class ExternalModule extends AbstractExternalModule {
         return true;
     }
 
-    function sendSummaryAccrualData() {
+    function sendSummaryAccrualData($user = null) {
+        // TODO: Abstract this to make it suitable for a cron job
+        global $project_contact_email;
+
+        $protocol_no = $this->getProjectSetting('protocol_no');
+        if (!$user) {
+            $user = $this->framework->getUser();
+        }
+        // Initialize logging
+        $log_data = [
+            'protocol_no' => $protocol_no,
+            'configuring_user' => $user->username,
+            'data' => null
+        ];
+        $factory = new EntityFactory();
+
+        // Initialize email alert
+        $cc = [$project_contact_email];
+        $Project = $this->framework->getProject();
+        $users = $Project->getUsers();
+        // cc all users with design rights
+        foreach ($users as $user) {
+            if ($user->hasDesignRights()) {
+                array_push($cc, $user->getEmail());
+            }
+        }
+
+        $project_id = PROJECT_ID;
+        $plugin_page_link = APP_URL_EXTMOD .
+        "?prefix=redcap_oncore_client&page=plugins%2Fsummary_accrual_upload&pid=$project_id";
+        $email_body = 'There was an issue sending your OnCore Summary Accrual data. Please go visit</br>' . $plugin_page_link;
+        $email_info = [
+            'to' => $user->getEmail(),
+            'cc' => $cc,
+            'subject' => 'REDCap OnCore Summary Accrual Notice',
+            'sender' => 'please-do-not-reply@ufl.edu',
+            'body' => $email_body,
+            ];
+
+        // cc project owner if there is one
+        try {
+            // condensing these will cause Uncaught Errors
+            // TODO: address in entity to streamline
+            $query = $factory->query('project_ownership');
+            if ($query) { // project_ownership table exists
+                $project_owner = array_pop( // there should only be 1 entity object per project
+                        $query
+                        ->condition('pid', $project_id)
+                        ->execute()
+                        );
+                if ($project_owner) { // a project owner is set for this project
+                    $project_owner = $project_owner->getData()['username'];
+                    if ($project_owner) array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+                }
+                unset($project_owner);
+            }
+        }
+        catch (\Exception $e) {
+            // There is no project ownership data for this project
+        }
+
         if (!$this->testProtocol()) {
+            $log_data['data'] = json_encode('Protocol not open to summary accruals.');
+            $factory->create('oncore_summary_accrual', $log_data);
             return;
         }
 
@@ -782,21 +863,24 @@ class ExternalModule extends AbstractExternalModule {
                     "username" => $this->getSystemSetting('login'),
                     "password" => $this->getSystemSetting('password'),
                 ],
-                "protocol_no" => $this->getProjectSetting('protocol_no'),
+                "protocol_no" => $protocol_no,
                 "accrual_data" => $subjects
         ];
 
         $client = $this->getHttpClient();
-        $protocol_no = $this->getProjectSetting('protocol_no');
-        $endpoint = $this->getSystemSetting('ocr_api_url') . "/oncore/accruals";
+        $endpoint = "oncore/accruals";
 
-        //TODO: parse response, store response in an entity object
-        $response = $client->httpRequest('POST', $endpoint, $post_data);
+        $response = $client->httpRequest('POST', $endpoint, ['json' => $post_data]);
         if (!$response) {
             StatusMessageQueue::enqueue('There is a problem in the formatting of the summary accrual data. Please contact an administrator.', 'error');
+            $log_data['data'] = json_encode('Unknown data formatting error.');
+            $factory->create('oncore_summary_accrual', $log_data);
+            $this->sendEmail($email_info);
             return;
         }
         $response = $response->getBody()->getContents();
+
+        $log_data['data'] = $response;
 
         $response = json_decode($response, true);
         $errors = count($response['error_records']);
@@ -808,6 +892,10 @@ class ExternalModule extends AbstractExternalModule {
             null));
 
         StatusMessageQueue::enqueue("Successfully sent " . ($total_accruals - $errors) . " / $total_accruals records", $type);
+
+        if ($type != 'success') $this->sendEmail($email_info);
+
+        $factory->create('oncore_summary_accrual', $log_data);
     }
 
     function gatherSummaryAccrualData() {
@@ -844,6 +932,17 @@ class ExternalModule extends AbstractExternalModule {
         }
 
         return $subjects;
+    }
+
+    function sendEmail($email_info) {
+		$to = $email_info['to'];
+        $sender = $email_info['sender'];
+		$subject = $email_info['subject'];
+		$body = $email_info['body'];
+        $cc = $email_info['cc'] ? implode(',', $email_info['cc']) : '';
+
+		$success = REDCap::email($to, $sender, $subject, $body, $cc);
+		return $success;
     }
 
 }
