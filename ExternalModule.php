@@ -424,7 +424,6 @@ class ExternalModule extends AbstractExternalModule {
 
                 $settings += ['protocols' => $protocols, 'protocolNo' => $this->getProjectSetting('protocol_no')];
             }
-            //curl_close($ch);
 
         }
 
@@ -864,7 +863,7 @@ class ExternalModule extends AbstractExternalModule {
             StatusMessageQueue::enqueue('There is a problem in the formatting of the summary accrual data. Please contact an administrator.', 'error');
             $log_data['data'] = json_encode('Unknown data formatting error.');
             $factory->create('oncore_summary_accrual', $log_data);
-            $this->send_email($email_info);
+            $this->sendEmail($email_info);
             return;
         }
         $response = $response->getBody()->getContents();
@@ -882,7 +881,7 @@ class ExternalModule extends AbstractExternalModule {
 
         StatusMessageQueue::enqueue("Successfully sent " . ($total_accruals - $errors) . " / $total_accruals records", $type);
 
-        if ($type == 'error') $this->send_email($email_info);
+        if ($type == 'error') $this->sendEmail($email_info);
 
         $factory->create('oncore_summary_accrual', $log_data);
     }
