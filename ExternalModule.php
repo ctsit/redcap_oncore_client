@@ -881,7 +881,7 @@ class ExternalModule extends AbstractExternalModule {
 
         StatusMessageQueue::enqueue("Successfully sent " . ($total_accruals - $errors) . " / $total_accruals records", $type);
 
-        if ($type == 'error') $this->sendEmail($email_info);
+        if ($type != 'success') $this->sendEmail($email_info);
 
         $factory->create('oncore_summary_accrual', $log_data);
     }
