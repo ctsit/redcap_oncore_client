@@ -827,14 +827,19 @@ class ExternalModule extends AbstractExternalModule {
             ];
 
         // cc project owner if there is one
-        $project_owner = array_pop( // there should only be 1 entity object per project
-                $factory->query('project_ownership')
-                ->condition('pid', $project_id)
-                ->execute()
-                )
-            ->getData()
-            ['username'];
-        if ($project_owner) array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+        try {
+            $project_owner = array_pop( // there should only be 1 entity object per project
+                    $factory->query('project_ownership')
+                    ->condition('pid', $project_id)
+                    ->execute()
+                    )
+                ->getData()
+                ['username'];
+            array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+        }
+        catch ($e) {
+            // There is no project ownership data for this project
+        }
 
         if (!$this->testProtocol()) {
             $log_data['data'] = json_encode('Protocol not open to summary accruals.');
