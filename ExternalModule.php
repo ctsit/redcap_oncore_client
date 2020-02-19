@@ -828,16 +828,23 @@ class ExternalModule extends AbstractExternalModule {
 
         // cc project owner if there is one
         try {
-            $project_owner = array_pop( // there should only be 1 entity object per project
-                    $factory->query('project_ownership')
-                    ->condition('pid', $project_id)
-                    ->execute()
-                    )
-                ->getData()
-                ['username'];
-            array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+            // condensing these will cause Uncaught Errors
+            // TODO: address in entity to streamline
+            $query = $factory->query('project_ownership');
+            if ($query) { // project_ownership table exists
+                $project_owner = array_pop( // there should only be 1 entity object per project
+                        $query
+                        ->condition('pid', $project_id)
+                        ->execute()
+                        );
+                if ($project_owner) { // a project owner is set for this project
+                    $project_owner = $project_owner->getData()['username'];
+                    if ($project_owner) array_push($cc, $this->framework->getUser($project_owner)->getEmail());
+                }
+                unset($project_owner);
+            }
         }
-        catch ($e) {
+        catch (\Exception $e) {
             // There is no project ownership data for this project
         }
 
