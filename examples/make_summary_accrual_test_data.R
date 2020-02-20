@@ -26,7 +26,7 @@ age_at_enrollment_in_years <- case_when(preserve_age & preserve_both ~ round(age
 date_of_birth <- case_when(preserve_dob & preserve_both ~ (onstudydate - age_at_enrollment_in_days), TRUE ~ as.Date(NA))
 
 # Combine my columns and write a test dataset
-test_data <- tibble(record_id, onstudydate, gender, race, ethnicity, date_of_birth, age_at_enrollment = age_at_enrollment_in_years)
+test_data <- tibble(record_id, onstudydate, gender, race, ethnicity, date_of_birth, age = age_at_enrollment_in_years)
 write_csv(test_data, "summary_accrual_test_data.csv", na = "")
 
 # create dataset that excludes coded variables
