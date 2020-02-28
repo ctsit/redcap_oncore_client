@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="OnCore Summary Accrual Data Template" AsOfDateTime="2019-11-22T16:56:43" CreationDateTime="2019-11-22T16:56:43" SourceSystem="REDCap" SourceSystemVersion="9.1.1">
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="OnCore Summary Accrual Data Template" AsOfDateTime="2020-02-19T20:38:11" CreationDateTime="2020-02-19T20:38:11" SourceSystem="REDCap" SourceSystemVersion="9.7.0">
 <Study OID="Project.OnCoreSummaryAccrualDataTempla">
 <GlobalVariables>
 	<StudyName>OnCore Summary Accrual Data Template</StudyName>
@@ -14,8 +14,9 @@
 	<redcap:Purpose>4</redcap:Purpose>
 	<redcap:PurposeOther></redcap:PurposeOther>
 	<redcap:ProjectNotes></redcap:ProjectNotes>
+	<redcap:MissingDataCodes></redcap:MissingDataCodes>
 </GlobalVariables>
-<MetaDataVersion OID="Metadata.OnCoreSummaryAccrualDataTempla_2019-11-22_1656" Name="OnCore Summary Accrual Data Template" redcap:RecordIdField="record_id">
+<MetaDataVersion OID="Metadata.OnCoreSummaryAccrualDataTempla_2020-02-19_2038" Name="OnCore Summary Accrual Data Template" redcap:RecordIdField="record_id">
 	<FormDef OID="Form.oncore_data_template" Name="OnCore Data Template" Repeating="No" redcap:FormName="oncore_data_template">
 		<ItemGroupRef ItemGroupOID="oncore_data_template.record_id" Mandatory="No"/>
 		<ItemGroupRef ItemGroupOID="oncore_data_template.oncore_data_template_complete" Mandatory="No"/>
@@ -26,6 +27,8 @@
 		<ItemRef ItemOID="gender" Mandatory="No" redcap:Variable="gender"/>
 		<ItemRef ItemOID="race" Mandatory="No" redcap:Variable="race"/>
 		<ItemRef ItemOID="ethnicity" Mandatory="No" redcap:Variable="ethnicity"/>
+		<ItemRef ItemOID="date_of_birth" Mandatory="No" redcap:Variable="date_of_birth"/>
+		<ItemRef ItemOID="age" Mandatory="No" redcap:Variable="age"/>
 	</ItemGroupDef>
 	<ItemGroupDef OID="oncore_data_template.oncore_data_template_complete" Name="Form Status" Repeating="No">
 		<ItemRef ItemOID="oncore_data_template_complete" Mandatory="No" redcap:Variable="oncore_data_template_complete"/>
@@ -47,6 +50,20 @@
 	<ItemDef OID="ethnicity" Name="ethnicity" DataType="text" Length="1" redcap:Variable="ethnicity" redcap:FieldType="radio">
 		<Question><TranslatedText>Ethnicity</TranslatedText></Question>
 		<CodeListRef CodeListOID="ethnicity.choices"/>
+	</ItemDef>
+	<ItemDef OID="date_of_birth" Name="date_of_birth" DataType="date" Length="999" redcap:Variable="date_of_birth" redcap:FieldType="text" redcap:TextValidationType="date_mdy">
+		<Question><TranslatedText>Date of Birth</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="age" Name="age" DataType="integer" Length="999" redcap:Variable="age" redcap:FieldType="text" redcap:TextValidationType="int" redcap:FieldNote="(years)">
+		<Question><TranslatedText>Age</TranslatedText></Question>
+		<RangeCheck Comparator="GE" SoftHard="Soft">
+			<CheckValue>0</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range. (0 - 150). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
+		<RangeCheck Comparator="LE" SoftHard="Soft">
+			<CheckValue>150</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range. (0 - 150). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
 	</ItemDef>
 	<ItemDef OID="oncore_data_template_complete" Name="oncore_data_template_complete" DataType="text" Length="1" redcap:Variable="oncore_data_template_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
 		<Question><TranslatedText>Complete?</TranslatedText></Question>
@@ -79,6 +96,4 @@
 	</CodeList>
 </MetaDataVersion>
 </Study>
-<ClinicalData StudyOID="Project.OnCoreSummaryAccrualDataTempla" MetaDataVersionOID="Metadata.OnCoreSummaryAccrualDataTempla_2019-11-22_1656">
-</ClinicalData>
 </ODM>

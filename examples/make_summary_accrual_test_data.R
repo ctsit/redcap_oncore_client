@@ -1,19 +1,33 @@
-library(tidyverse)
+# Generate datasets for the Summary Accrual feature testing
 
-# How many records are needed?
+library(tidyverse)
+library(lubridate)
+
+# control limits on the test data
 records <- 100
+max_age <- 120
 
 # generate a vector of values for each column with a uniform distribution
 record_id <- seq(from = 1, to = records)
-onstudydate <- Sys.Date() - sample(rep(1:20, 10), records)
-gender <- sample(rep(c("M", "F", "B", NA), 50), records)
-race <- sample(rep(c("01", "03", "04", "05", "06", "07", "99", NA), 50), records)
-ethnicity <- sample(rep(c("1", "2", "3", "9", NA), 50), records)
+onstudydate <- Sys.Date() - sample(1:20, records, replace = T)
+# erase one onstudydate at random
+onstudydate[sample(1:records, 1)] <- as.Date(NA)
+gender <- sample(c("M", "F", "B", NA), records, replace = T)
+race <- sample(c("01", "03", "04", "05", "06", "07", "99", NA), records, replace = T)
+ethnicity <- sample(c("1", "2", "3", "9", NA), records, replace = T)
 
-# Uncomment these lines if you need to exclude coded variables
-# race <- rep(NA, records)
-# ethnicity <- race
+# Create matching ages and DOBs with randomly erased DOB and age
+trues_per_false <- 15
+preserve_age <- sample(c(rep(T,trues_per_false),F), records, replace = T)
+preserve_dob <- sample(c(rep(T,trues_per_false),F), records, replace = T)
+preserve_both <- sample(c(rep(T,trues_per_false),F), records, replace = T)
+age_at_enrollment_in_days <- sample(1:(365*max_age), records)
+age_at_enrollment_in_years <- case_when(preserve_age & preserve_both ~ round(age_at_enrollment_in_days/365.25), TRUE ~ as.numeric(NA))
+date_of_birth <- case_when(preserve_dob & preserve_both ~ (onstudydate - age_at_enrollment_in_days), TRUE ~ as.Date(NA))
 
 # Combine my columns and write a test dataset
-test_data <- tibble(record_id, onstudydate, gender, race, ethnicity)
+test_data <- tibble(record_id, onstudydate, gender, race, ethnicity, date_of_birth, age = age_at_enrollment_in_years)
 write_csv(test_data, "summary_accrual_test_data.csv", na = "")
+
+# create dataset that excludes coded variables
+test_data %>% mutate(race = NA, ethnicity = NA) %>% write_csv(., "summary_accrual_test_data_imagine.csv", na = "")
