@@ -927,6 +927,13 @@ class ExternalModule extends AbstractExternalModule {
             }
 
             foreach($datum as $k => $v) {
+                // condense multiracial
+                if ( $mappings[$k] == "Race" && is_array($v) ) {
+                    $v = (array_count_values($v)[1] > 1) ?
+                        "More than one race" :
+                        (array_search(1, $v)) ?: '';
+                }
+
                 $subject[$mappings[$k]] = $v;
             }
             $subjects[$i++] = $subject;
