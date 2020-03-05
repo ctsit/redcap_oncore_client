@@ -902,14 +902,15 @@ class ExternalModule extends AbstractExternalModule {
         $using_template = $this->getProjectSetting('using_sa_template');
 
         // TODO: make configurable on the plugin page
-        // TODO: add unique identifier, e.g. record ID
         if ($using_template) {
             $mappings = [
+                \Records::getTablePK(PROJECT_ID) => "id", // set unique id to the table pk
                 "onstudydate" => "On Study Date*",
                 "gender" => "Gender",
                 //TODO: institution
                 "race" => "Race",
-                "ethnicity" => "Ethnicity"
+                "ethnicity" => "Ethnicity",
+                "age_at_enrollment" => "Age at enrollment"
             ];
         }
         $mapping_keys = array_keys($mappings);
@@ -926,6 +927,13 @@ class ExternalModule extends AbstractExternalModule {
             }
 
             foreach($datum as $k => $v) {
+                // condense multiracial
+                if ( $mappings[$k] == "Race" && is_array($v) ) {
+                    $v = (array_count_values($v)[1] > 1) ?
+                        "More than one race" :
+                        (array_search(1, $v)) ?: '';
+                }
+
                 $subject[$mappings[$k]] = $v;
             }
             $subjects[$i++] = $subject;
