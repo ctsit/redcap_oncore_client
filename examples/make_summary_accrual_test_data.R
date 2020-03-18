@@ -11,9 +11,9 @@ max_age <- 120
 record_id <- seq(from = 1, to = records)
 onstudydate <- Sys.Date() - sample(1:20, records, replace = T)
 # erase one onstudydate at random
-# No let's not do that until Harshita fixes this issue: https://github.com/UF-OCR/ocr-api/issues/18
-# onstudydate[sample(1:records, 1)] <- as.Date(NA)
-gender <- sample(c("M", "F", "B", NA), records, replace = T)
+onstudydate[sample(1:records, 1)] <- as.Date(NA)
+
+gender <- sample(c("1", "2", "9", NA), records, replace = T)
 race <- sample(c("01", "03", "04", "05", "06", "07", "99", NA), records, replace = T)
 ethnicity <- sample(c("1", "2", "3", "9", NA), records, replace = T)
 
