@@ -993,11 +993,20 @@ class ExternalModule extends AbstractExternalModule {
 
     function sa_send_cron() {
         $factory = new EntityFactory();
-        $query = $factory->query('oncore_summary_accrual_config');
+        $query = $factory->query('oncore_summary_accrual_config'); // TODO: group by project_id, select MAX(updated)
         $entities = $query->execute();
+        $sa_send_interval = ( $this->framework->getSystemSetting('sa_send_interval') ) ?: 24; // default to 24 hours
+        $sa_send_interval = $sa_send_interval * 60 * 60; // convert seconds to hours
 
         foreach($entities as $entity_id => $entity) {
-            $this->sendSummaryAccrualData($entity);
+            $run_recently = $factory->query('oncore_summary_accrual')
+                ->condition('configuration', $entity_id)
+                ->condition('updated', time() - $sa_send_interval, '>')
+                ->countQuery()
+                ->execute();
+            if (!$run_recently) {
+                $this->sendSummaryAccrualData($entity);
+            }
         }
     }
 

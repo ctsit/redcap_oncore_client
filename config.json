@@ -119,6 +119,11 @@
             "type": "checkbox"
         },
         {
+            "key": "sa_send_interval",
+            "name": "Frequency to send Summary Accrual data (Hours)",
+            "type": "text"
+        },
+        {
             "key": "use_custom_database",
             "name": "Store Institution IDs in REDCap or Entity database?",
             "type": "radio",
