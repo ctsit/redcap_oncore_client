@@ -119,6 +119,11 @@
             "type": "checkbox"
         },
         {
+            "key": "sa_send_interval",
+            "name": "Frequency to send Summary Accrual data (Hours)",
+            "type": "text"
+        },
+        {
             "key": "use_custom_database",
             "name": "Store Institution IDs in REDCap or Entity database?",
             "type": "radio",
@@ -355,7 +360,21 @@
                 "name": "Upload Summary Accrual",
                 "icon": "fas fa-cloud-upload-alt",
                 "url": "plugins/summary_accrual_upload.php"
+            },
+            {
+                "name": "Configure Summary Accrual",
+                "icon": "fas fa-cogs",
+                "url": "plugins/summary_accrual_configure.php"
             }
         ]
-    }
+    },
+    "crons": [
+        {
+            "cron_name": "sa_send_cron",
+            "cron_description": "Scheduled Summary Accrual Sending",
+            "method": "sa_send_cron",
+            "cron_frequency": "300",
+            "cron_max_run_time": "120"
+        }
+    ]
 }

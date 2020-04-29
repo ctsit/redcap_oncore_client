@@ -7,7 +7,7 @@ use RCView;
 use REDCapEntity\EntityList;
 use REDCapEntity\StatusMessageQueue;
 
-require_once 'PermissionChecker.php';
+require_once dirname(__DIR__) . '/PermissionChecker.php';
 
 class SummaryAccrualList extends EntityList {
 

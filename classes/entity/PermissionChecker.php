@@ -6,6 +6,7 @@ use OnCoreClient\ExternalModule\ExternalModule;
 use REDCapEntity\StatusMessageQueue;
 use REDCapEntity\EntityList;
 
+// TODO: Consider decoupling from EntityList to allow EntityForm use
 class PermissionChecker extends EntityList {
 
     public static function userOnStaff($EntityList) {

@@ -236,9 +236,43 @@ class ExternalModule extends AbstractExternalModule {
             'label_plural' => 'OnCore SA Results',
             'special_keys' => [
                 'project' => 'project_id',
+            ],
+            'properties' => [
+                'project_id' => [
+                    'name' => 'Project ID',
+                    'type' => 'project',
+                    'required' => true,
+                ],
+                'configuration' => [
+                    'name' => 'Configuration',
+                    'type' => 'entity_reference',
+                    'entity_type' => 'oncore_summary_accrual_config',
+                    'required' => false,
+                ],
+                // TODO: move this to a mapping entity, refer to by PK
+                'data' => [
+                    'name' => 'Data',
+                    'type' => 'json',
+                ],
+            ],
+        ];
+
+        $types['oncore_summary_accrual_config'] = [
+            'label' => 'OnCore SA Config',
+            'label_plural' => 'OnCore SA Configs',
+            'form_class' => [
+                'path' => 'classes/entity/SummaryAccrualConfig.php',
+                'name' => 'OnCoreClient\Entity\SummaryAccrualConfig',
+            ],
+            'special_keys' => [
                 'author' => 'configuring_user'
             ],
             'properties' => [
+                'configuring_user' => [
+                    'name' => 'Configurer',
+                    'type' => 'user',
+                    'required' => true,
+                ],
                 'project_id' => [
                     'name' => 'Project ID',
                     'type' => 'project',
@@ -249,14 +283,8 @@ class ExternalModule extends AbstractExternalModule {
                     'type' => 'text',
                     'required' => true,
                 ],
-                // TODO: move this to a mapping entity, refer to by PK
-                'configuring_user' => [
-                    'name' => 'Configurer',
-                    'type' => 'user',
-                    'required' => true,
-                ],
-                'data' => [
-                    'name' => 'Data',
+                'mappings' => [
+                    'name' => 'Mappings',
                     'type' => 'json',
                 ],
             ],
@@ -765,10 +793,10 @@ class ExternalModule extends AbstractExternalModule {
         return $value;
     }
 
-    function testProtocol() {
+    function testProtocol($project_id = null) {
         $client = $this->getHttpClient();
 
-        $protocol_no = $this->getProjectSetting('protocol_no');
+        $protocol_no = $this->getProjectSetting('protocol_no', $project_id);
         $endpoint = "oncore/validateProtocol/$protocol_no";
 
         $response = $client->httpRequest('GET', $endpoint, [], true);
@@ -787,34 +815,44 @@ class ExternalModule extends AbstractExternalModule {
         return true;
     }
 
-    function sendSummaryAccrualData($user = null) {
+    function sendSummaryAccrualData($entity = null) {
         // TODO: Abstract this to make it suitable for a cron job
         global $project_contact_email;
 
-        $protocol_no = $this->getProjectSetting('protocol_no');
-        if (!$user) {
-            $user = $this->framework->getUser();
-        }
-        // Initialize logging
         $log_data = [
-            'protocol_no' => $protocol_no,
-            'configuring_user' => $user->username,
-            'data' => null
+            'configuration' => '',
+            'data' => ''
         ];
+
+        // If an entity object is provided, this is a cron
+        if (!$entity) {
+            $project_id = PROJECT_ID;
+            $user = $this->framework->getUser();
+        } else {
+            $entity_data = $entity->getData();
+            $project_id = $entity_data['project_id'];
+            $user = $this->framework->getUser($entity_data['configuring_user']);
+
+            $log_data['configuration'] = $entity->getId();
+        }
+
+        $protocol_no = $this->getProjectSetting('protocol_no', $project_id);
+
+        $log_data['project_id'] = $project_id;
+
         $factory = new EntityFactory();
 
         // Initialize email alert
         $cc = [$project_contact_email];
-        $Project = $this->framework->getProject();
+        $Project = $this->framework->getProject($project_id);
         $users = $Project->getUsers();
         // cc all users with design rights
         foreach ($users as $user) {
-            if ($user->hasDesignRights()) {
+            if ($user->hasDesignRights($project_id)) {
                 array_push($cc, $user->getEmail());
             }
         }
 
-        $project_id = PROJECT_ID;
         $plugin_page_link = APP_URL_EXTMOD .
         "?prefix=redcap_oncore_client&page=plugins%2Fsummary_accrual_upload&pid=$project_id";
         $email_body = 'There was an issue sending your OnCore Summary Accrual data. Please go visit</br>' . $plugin_page_link;
@@ -848,13 +886,13 @@ class ExternalModule extends AbstractExternalModule {
             // There is no project ownership data for this project
         }
 
-        if (!$this->testProtocol()) {
+        if (!$this->testProtocol($project_id)) {
             $log_data['data'] = json_encode('Protocol not open to summary accruals.');
             $factory->create('oncore_summary_accrual', $log_data);
             return;
         }
 
-        $subjects = $this->gatherSummaryAccrualData();
+        $subjects = $this->gatherSummaryAccrualData($project_id);
 
         // TODO: consider parsing subjects
         $total_accruals = count($subjects);
@@ -883,7 +921,7 @@ class ExternalModule extends AbstractExternalModule {
         $log_data['data'] = $response;
 
         $response = json_decode($response, true);
-        $errors = count($response['error_records']);
+        $errors = $total_accruals - $response['total_accruals'];
 
         $type =
             $errors == 0 ? 'success' :
@@ -898,14 +936,14 @@ class ExternalModule extends AbstractExternalModule {
         $factory->create('oncore_summary_accrual', $log_data);
     }
 
-    function gatherSummaryAccrualData() {
-        $using_template = $this->getProjectSetting('using_sa_template');
+    function gatherSummaryAccrualData($project_id) {
+        $using_template = $this->getProjectSetting('using_sa_template', $project_id);
 
         // TODO: make configurable on the plugin page
         if ($using_template) {
             $mappings = [
-                \Records::getTablePK(PROJECT_ID) => "id", // set unique id to the table pk
-                "onstudydate" => "On Study Date*",
+                \Records::getTablePK($project_id) => "id", // set unique id to the table pk
+                "onstudydate" => "On Study Date",
                 "gender" => "Gender",
                 //TODO: institution
                 "race" => "Race",
@@ -916,7 +954,7 @@ class ExternalModule extends AbstractExternalModule {
         $mapping_keys = array_keys($mappings);
 
         // pull only relevant fields
-        $data = REDCap::getData(PROJECT_ID, 'array', null, $mapping_keys);
+        $data = REDCap::getData($project_id, 'array', null, $mapping_keys);
 
         $i = 0;
         $subjects = [];
@@ -953,4 +991,35 @@ class ExternalModule extends AbstractExternalModule {
 		return $success;
     }
 
+    function sa_send_cron() {
+        $factory = new EntityFactory();
+        $query = $factory->query('oncore_summary_accrual_config'); // TODO: group by project_id, select MAX(updated)
+        $entities = $query->execute();
+        $sa_send_interval = ( $this->framework->getSystemSetting('sa_send_interval') ) ?: 24; // default to 24 hours
+        $sa_send_interval = $sa_send_interval * 60 * 60; // convert seconds to hours
+
+        foreach($entities as $entity_id => $entity) {
+            $run_recently = $factory->query('oncore_summary_accrual')
+                ->condition('configuration', $entity_id)
+                ->condition('updated', time() - $sa_send_interval, '>')
+                ->countQuery()
+                ->execute();
+            if (!$run_recently) {
+                $this->sendSummaryAccrualData($entity);
+            }
+        }
+    }
+
+    function createSAConfig() {
+        $factory = new EntityFactory();
+
+        $data = [
+            'configuring_user' => $this->framework->getUser()->username,
+            'project_id' => PROJECT_ID,
+            'protocol_no' => $this->framework->getProjectSetting('protocol_no'),
+            'mappings' => json_encode('')
+        ];
+
+        $factory->create('oncore_summary_accrual_config', $data);
+    }
 }

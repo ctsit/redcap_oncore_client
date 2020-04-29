@@ -91,9 +91,9 @@
 		<CodeListRef CodeListOID="oncore_data_template_complete.choices"/>
 	</ItemDef>
 	<CodeList OID="gender.choices" Name="gender" DataType="text" redcap:Variable="gender">
-		<CodeListItem CodedValue="F"><Decode><TranslatedText>Female</TranslatedText></Decode></CodeListItem>
-		<CodeListItem CodedValue="M"><Decode><TranslatedText>Male</TranslatedText></Decode></CodeListItem>
-		<CodeListItem CodedValue="B"><Decode><TranslatedText>Both</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Female</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Male</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="9"><Decode><TranslatedText>Unknown</TranslatedText></Decode></CodeListItem>
 	</CodeList>
 	<CodeList OID="race___01.choices" Name="race___01" DataType="boolean" redcap:Variable="race" redcap:CheckboxChoices="01, White | 03, Black or African American | 04, Native Hawaiian or Other Pacific Islander | 05, Asian | 06, American Indian or Alaska Native | 07, Subject Refused | 99, Unknown">
 		<CodeListItem CodedValue="1"><Decode><TranslatedText>Checked</TranslatedText></Decode></CodeListItem>
