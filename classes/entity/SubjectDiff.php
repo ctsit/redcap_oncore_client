@@ -7,6 +7,7 @@ include_once APP_PATH_DOCROOT . 'ProjectGeneral/form_renderer_functions.php';
 use OnCoreClient\ExternalModule\ExternalModule;
 use REDCap;
 use Records;
+use DataEntry;
 use REDCapEntity\Entity;
 use REDCapEntity\StatusMessageQueue;
 
@@ -61,10 +62,10 @@ class SubjectDiff extends Entity {
         }
 
         // check version due to 9+ requring the $project_id parameter be set without a default
-        if ( (explode('.', REDCAP_VERSION)[0]) >= 9 ) {
+        if ( method_exists( 'Records', 'addNewRecordToCache' ) ) {
             Records::addNewRecordToCache($project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id);
         } else {
-            Records::addNewRecordToCache($record = $record, $arm_id = $arm, $event_id = $event_id);
+            Records::addNewAutoIdRecordToCache( $project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id );
         }
 
 
@@ -125,8 +126,11 @@ class SubjectDiff extends Entity {
             if (Records::recordExists($this->data['project_id'], $new_record, $arm)) {
                 return false;
             }
-
+            if ( function_exists( 'changeRecordId' ) ) {
             changeRecordId($record, $subject_id);
+            } else {
+                DataEntry::changeRecordId( $record, $subject_id );
+            }
             $record = $subject_id;
         }
         else {

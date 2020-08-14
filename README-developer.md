@@ -7,6 +7,18 @@ This document provides some addtional notes that might be usefiul for software d
 
 See the [README](README.md) for information on prereqs, installation, configuration and usage.
 
+## Installing Soap Client into Docker Container
+
+To add the PHP soap client to the docker instance you will want to add some lines to  redcap-docker-compose/xxx/docker-web/Dockerfile
+
+In the list of packages being listed under `RUN apt-get update` 
+* add `libxml2-dev \ ` after `zip \ `
+* add `soap` on the `&& docker-php-ext-install gd zip mysqli \ ` line before the `\ `
+
+These changes will only take effect after you rebuild the docker image.
+
+
+
 ## Using the API
 
 Here is an example of an API request to get protocol information (`getProtocol`).
