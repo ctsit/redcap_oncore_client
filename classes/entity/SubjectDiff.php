@@ -7,6 +7,7 @@ include_once APP_PATH_DOCROOT . 'ProjectGeneral/form_renderer_functions.php';
 use OnCoreClient\ExternalModule\ExternalModule;
 use REDCap;
 use Records;
+use DataEntry;
 use REDCapEntity\Entity;
 use REDCapEntity\StatusMessageQueue;
 
@@ -125,8 +126,11 @@ class SubjectDiff extends Entity {
             if (Records::recordExists($this->data['project_id'], $new_record, $arm)) {
                 return false;
             }
-
-            changeRecordId($record, $subject_id);
+            if ( function_exists( 'changeRecordId' ) ) {
+                changeRecordId( $record, $subject_id );
+            } else {
+                DataEntry::changeRecordId( $record, $subject_id );
+            }
             $record = $subject_id;
         }
         else {
