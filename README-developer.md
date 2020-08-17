@@ -17,7 +17,8 @@ In the list of packages being listed under `RUN apt-get update`
 
 These changes will only take effect after you rebuild the docker image.
 
-
+To add PHP soap client to an already running instance, navigate to the root of your `redcap-docker-compose` directory and run the following:  
+`docker exec -ti $(docker-compose ps | grep web | cut -d' ' -f1) bash -c "apt update && apt -y install libxml2-dev && docker-php-ext-install soap && service apache2 restart"`
 
 ## Using the API
 
