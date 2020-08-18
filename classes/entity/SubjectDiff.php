@@ -61,7 +61,7 @@ class SubjectDiff extends Entity {
             }
         }
 
-        // check version due to 9+ requring the $project_id parameter be set without a default
+        // check if old method still exists, otherwise use the new method name changed in version 10
         if ( method_exists( 'Records', 'addNewRecordToCache' ) ) {
             Records::addNewRecordToCache($project_id = PROJECT_ID, $record = $record, $arm_id = $arm, $event_id = $event_id);
         } else {
