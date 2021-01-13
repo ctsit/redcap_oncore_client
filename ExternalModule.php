@@ -42,13 +42,6 @@ class ExternalModule extends AbstractExternalModule {
         EntityDB::buildSchema($this->PREFIX);
     }
 
-    /**
-     * @inheritdoc.
-     */
-    function redcap_module_system_disable($version) {
-        EntityDB::dropSchema($this->PREFIX);
-    }
-
     function redcap_entity_types() {
         $types = [];
 
