@@ -1,4 +1,11 @@
-# REDCap OnCore Client
+# REDCap OnCore Client - ARCHIVED
+
+**This repository has been archived and is no longer actively maintained.**
+
+This project was archived as of October 1, 2025. The project for which it was written is now over and does not conform to modern OnCore standards. There's no funding to provide further maintenance for other projects. Please don't hesitate to use this code in accordance with the license; however, the authors are unable to offer any additional support.
+
+-----------
+
 This REDCap external module provides integration with Forte Research's OnCore. It allows REDCap project builders to associate a REDCap project with an OnCore protocol and import enrollment data into REDCap. It also allows users to select protocols via either the SIP interface or UF's OCR API, and read protocol data from OnCore via the SOAP API.
 
 ## Current Limitations
